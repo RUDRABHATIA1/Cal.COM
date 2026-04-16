@@ -10,6 +10,8 @@ services:
     envVars:
       - key: NODE_ENV
         value: production
+      - key: NODE_VERSION
+        value: "20"
       - key: MONGODB_URI
         value: mongodb://Rudra:12345gthy%25%26%29%26%5E%23%24GYgghhhh@ac-cjnni4s-shard-00-00.vcqm82y.mongodb.net:27017,ac-cjnni4s-shard-00-01.vcqm82y.mongodb.net:27017,ac-cjnni4s-shard-00-02.vcqm82y.mongodb.net:27017/calcom_clone?ssl=true&replicaSet=atlas-tuueog-shard-0&authSource=admin&appName=CalCluster
       - key: JWT_SECRET
@@ -22,6 +24,9 @@ services:
     rootDir: frontend
     buildCommand: npm install && npm run build
     staticPublishPath: dist
+    envVars:
+      - key: NODE_VERSION
+        value: "20"
     routes:
       - type: rewrite
         source: /*
