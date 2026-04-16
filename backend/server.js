@@ -45,7 +45,6 @@ app.get('/api/health', (req, res) => {
 });
 
 // Database + start
-const { MongoMemoryServer } = require('mongodb-memory-server');
 const path = require('path');
 const PORT = process.env.PORT || 5000;
 const DATA_DIR = path.join(__dirname, 'data');
@@ -67,6 +66,7 @@ async function startServer() {
 
     // ── LOCAL DEV MODE (MongoMemoryServer) ───────────────────────────────────
     console.log('Starting persistent local database...');
+    const { MongoMemoryServer } = require('mongodb-memory-server');
     const mongoServer = await MongoMemoryServer.create({
       instance: { dbPath: DATA_DIR, storageEngine: 'wiredTiger' },
     });
