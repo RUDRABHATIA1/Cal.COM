@@ -52,6 +52,20 @@ const DATA_DIR = path.join(__dirname, 'data');
 
 async function startServer() {
   try {
+    // ── PRODUCTION MODE (Render) ─────────────────────────────────────────────
+    if (process.env.NODE_ENV === 'production') {
+      console.log('Connecting to Production MongoDB Atlas...');
+      await mongoose.connect(process.env.MONGODB_URI);
+      console.log('✅ Connected to MongoDB Atlas!');
+      
+      // Auto-seed for safety 
+      await seed();
+      
+      app.listen(PORT, () => console.log(`🚀 Production Server running on port ${PORT}`));
+      return;
+    }
+
+    // ── LOCAL DEV MODE (MongoMemoryServer) ───────────────────────────────────
     console.log('Starting persistent local database...');
     const mongoServer = await MongoMemoryServer.create({
       instance: { dbPath: DATA_DIR, storageEngine: 'wiredTiger' },
