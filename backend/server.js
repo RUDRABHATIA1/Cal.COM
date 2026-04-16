@@ -61,7 +61,7 @@ async function startServer() {
       // Auto-seed for safety 
       await seed();
       
-      app.listen(PORT, () => console.log(`🚀 Production Server running on port ${PORT}`));
+      app.listen(PORT, '0.0.0.0', () => console.log(`🚀 Production Server running on port ${PORT}`));
       return;
     }
 
@@ -82,6 +82,10 @@ async function startServer() {
     });
   } catch (err) {
     console.error('Failed to start server:', err.message);
+    if (process.env.NODE_ENV === 'production') {
+      console.error('❌ CRITICAL: Could not connect to MongoDB Atlas. Please ensure Network Access is set to 0.0.0.0/0 in Atlas!');
+      process.exit(1);
+    }
     try {
       console.log('Falling back to in-memory database...');
       const { MongoMemoryServer: MMS } = require('mongodb-memory-server');
