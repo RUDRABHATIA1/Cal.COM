@@ -41,6 +41,13 @@ async function seed() {
   // ── 2. Default Availability ────────────────────────────────────────────────
   let avail = await Availability.findOne({ userId: john._id, isDefault: true });
   if (!avail) {
+    // Calculate upcoming dates for overrides
+    const today = new Date();
+    const nextWeek = new Date(today.getTime() + 7 * 864e5);
+    const twoWeeks = new Date(today.getTime() + 14 * 864e5);
+    const threeWeeks = new Date(today.getTime() + 21 * 864e5);
+    const fmtDate = d => d.toISOString().split('T')[0];
+
     avail = await Availability.create({
       userId:    john._id,
       name:      'Working Hours',
@@ -55,9 +62,14 @@ async function seed() {
         { day: 'Friday',    enabled: true,  startTime: '09:00', endTime: '17:00' },
         { day: 'Saturday',  enabled: false, startTime: '09:00', endTime: '17:00' },
       ],
+      overrides: [
+        { date: fmtDate(nextWeek),   isOff: true,  startTime: '09:00', endTime: '17:00' },  // Day off
+        { date: fmtDate(twoWeeks),   isOff: false, startTime: '10:00', endTime: '14:00' },  // Short day
+        { date: fmtDate(threeWeeks), isOff: false, startTime: '08:00', endTime: '20:00' },  // Extended hours
+      ],
     });
     await User.findByIdAndUpdate(john._id, { defaultScheduleId: avail._id });
-    console.log('✅ Seed: Created default availability (Working Hours)');
+    console.log('✅ Seed: Created default availability (Working Hours) with date overrides');
   }
 
   // ── 2b. Additional Availability Schedule ───────────────────────────────────

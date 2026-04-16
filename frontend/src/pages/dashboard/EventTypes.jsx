@@ -7,9 +7,10 @@ import {
 } from 'lucide-react';
 import api from '../../utils/api';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../../context/AuthContext';
 
 // ── Single row ───────────────────────────────────────────────────────────────
-const EventTypeRow = ({ event, onDelete, onEdit, onCopy, onToggle, index }) => {
+const EventTypeRow = ({ event, onDelete, onEdit, onCopy, onToggle, index, username }) => {
   const [menuOpen, setMenuOpen] = useState(false);
 
   useEffect(() => {
@@ -67,7 +68,7 @@ const EventTypeRow = ({ event, onDelete, onEdit, onCopy, onToggle, index }) => {
 
         {/* External link */}
         <button
-          onClick={() => window.open(`/user/${event.slug}`, '_blank')}
+          onClick={() => window.open(`/${username}/${event.slug}`, '_blank')}
           className="p-2 rounded-md text-[#71717A] hover:text-white hover:bg-[#2B2B2B] transition-colors"
           title="Preview"
         >
@@ -98,7 +99,7 @@ const EventTypeRow = ({ event, onDelete, onEdit, onCopy, onToggle, index }) => {
               onClick={(e) => e.stopPropagation()}
             >
               <DropItem icon={<Settings className="w-4 h-4" />} label="Edit" onClick={() => { setMenuOpen(false); onEdit(event); }} />
-              <DropItem icon={<ExternalLink className="w-4 h-4" />} label="Preview" onClick={() => { setMenuOpen(false); window.open(`/user/${event.slug}`, '_blank'); }} />
+              <DropItem icon={<ExternalLink className="w-4 h-4" />} label="Preview" onClick={() => { setMenuOpen(false); window.open(`/${username}/${event.slug}`, '_blank'); }} />
               <DropItem icon={<Copy className="w-4 h-4" />} label="Copy link" onClick={() => { setMenuOpen(false); onCopy(event.slug); }} />
               <div className="my-1 border-t border-[#3F3F46]" />
               <DropItem icon={<Trash2 className="w-4 h-4" />} label="Delete" onClick={() => { setMenuOpen(false); onDelete(event._id); }} danger />
@@ -230,6 +231,8 @@ const NewEventModal = ({ onClose, onCreated }) => {
 // ── Main page ────────────────────────────────────────────────────────────────
 export default function EventTypes() {
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const username = user?.username || 'john';
   const [events, setEvents]   = useState([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
@@ -252,7 +255,7 @@ export default function EventTypes() {
   };
 
   const handleCopy = (slug) => {
-    navigator.clipboard.writeText(`${window.location.origin}/user/${slug}`);
+    navigator.clipboard.writeText(`${window.location.origin}/${username}/${slug}`);
     showToast('Link copied!');
   };
 
@@ -322,6 +325,7 @@ export default function EventTypes() {
               key={evt._id}
               index={i}
               event={evt}
+              username={username}
               onEdit={(e) => navigate(`/dashboard/event-types/${e._id}`)}
               onCopy={handleCopy}
               onToggle={handleToggle}

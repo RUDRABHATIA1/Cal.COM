@@ -8,13 +8,26 @@ const User = require('../models/User');
 // POST /api/bookings  – public: create a new booking
 router.post('/', async (req, res) => {
   try {
-    const { eventTypeId, attendeeName, attendeeEmail, attendeeTimezone, startTime, endTime, notes } = req.body;
+    const { eventTypeId, attendeeName, attendeeEmail, attendeeTimezone, startTime, endTime, notes, userFieldsResponses } = req.body;
     if (!eventTypeId || !attendeeName || !attendeeEmail || !startTime || !endTime) {
       return res.status(400).json({ message: 'Missing required fields' });
     }
     const eventType = await EventType.findById(eventTypeId);
     if (!eventType) return res.status(404).json({ message: 'Event type not found' });
 
+    // Check for double booking
+    const conflict = await Booking.findOne({
+      hostUserId: eventType.userId,
+      status: { $ne: 'CANCELLED' },
+      $or: [
+        { startTime: { $lt: new Date(endTime) }, endTime: { $gt: new Date(startTime) } }
+      ]
+    });
+    if (conflict) {
+      return res.status(409).json({ message: 'This time slot is already booked.' });
+    }
+
+    const host = await User.findById(eventType.userId);
     const booking = new Booking({
       eventTypeId,
       hostUserId: eventType.userId,
@@ -23,7 +36,12 @@ router.post('/', async (req, res) => {
       attendeeTimezone: attendeeTimezone || 'UTC',
       startTime: new Date(startTime),
       endTime: new Date(endTime),
-      notes
+      title: `${attendeeName} <> ${host?.name || 'Host'}`,
+      notes,
+      location: eventType.location || 'Google Meet',
+      meetingUrl: `https://meet.google.com/${Math.random().toString(36).substring(2, 5)}-${Math.random().toString(36).substring(2, 6)}-${Math.random().toString(36).substring(2, 5)}`,
+      status: eventType.requiresConfirmation ? 'PENDING' : 'ACCEPTED',
+      userFieldsResponses: userFieldsResponses || {},
     });
     await booking.save();
     res.status(201).json(booking);
@@ -32,12 +50,12 @@ router.post('/', async (req, res) => {
   }
 });
 
-// GET /api/bookings  – protected: list my upcoming bookings as host
+// GET /api/bookings  – protected: list ALL bookings as host (frontend filters by tab)
 router.get('/', auth, async (req, res) => {
   try {
-    const bookings = await Booking.find({ hostUserId: req.userId, status: { $ne: 'CANCELLED' } })
+    const bookings = await Booking.find({ hostUserId: req.userId })
       .populate('eventTypeId', 'title length slug')
-      .sort({ startTime: 1 });
+      .sort({ startTime: -1 });
     res.json(bookings);
   } catch (err) {
     res.status(500).json({ message: 'Server error' });
