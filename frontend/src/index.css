@@ -1,0 +1,54 @@
+@import "tailwindcss";
+
+/* ── Cal Sans Display Font ──────────────────────────────────────────────── */
+@font-face {
+  font-family: "Cal Sans";
+  src: url("https://fonts.gstatic.com/s/calsans/v2/fdN99sWUv3gWqXxqqRBctFs.woff2") format("woff2");
+  font-display: swap;
+  font-weight: 400;
+}
+
+/* ── Reset & Base ───────────────────────────────────────────────────────── */
+* {
+  box-sizing: border-box;
+}
+
+::selection {
+  background: rgba(99, 102, 241, 0.3);
+  color: #fff;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  margin: 0;
+  padding: 0;
+  background: #000;
+  color: #fff;
+}
+
+/* ── Font utilities ─────────────────────────────────────────────────────── */
+.font-cal {
+  font-family: "Cal Sans", sans-serif;
+}
+
+/* ── Scrollbar styling (dark mode) ──────────────────────────────────────── */
+::-webkit-scrollbar {
+  width: 10px;
+}
+::-webkit-scrollbar-track {
+  background: #000;
+}
+::-webkit-scrollbar-thumb {
+  background: #222;
+  border-radius: 10px;
+  border: 2px solid #000;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #333;
+}
