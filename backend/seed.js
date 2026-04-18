@@ -8,8 +8,8 @@ const User          = require('./models/User');
 const EventType     = require('./models/EventType');
 const Availability  = require('./models/Availability');
 const Booking       = require('./models/Booking');
-const Workflow      = require('./models/Workflow');
 const Team          = require('./models/Team');
+const Workflow      = require('./models/Workflow');
 
 const JOHN_EMAIL    = 'john@cal.com';
 const JOHN_USERNAME = 'john';

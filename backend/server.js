@@ -3,6 +3,15 @@ const express  = require('express');
 const mongoose = require('mongoose');
 const cors     = require('cors');
 const path     = require('path');
+
+// Pre-register models to prevent mongoose "MissingSchemaError" during diagnostics
+require('./models/User');
+require('./models/EventType');
+require('./models/Availability');
+require('./models/Booking');
+require('./models/Team');
+require('./models/Workflow');
+
 const seed     = require('./seed');
 
 const app = express();
@@ -106,18 +115,6 @@ async function startDatabase() {
     // Auto-seed for safety 
     console.log('🌱 Starting database seeding...');
     await seed();
-    
-    // Quick count diagnostics for debugging dashboard visibility
-    try {
-      const UserModel = mongoose.model('User');
-      const ETModel   = mongoose.model('EventType');
-      const BkModel   = mongoose.model('Booking');
-      const uC = await UserModel.countDocuments();
-      const eC = await ETModel.countDocuments();
-      const bC = await BkModel.countDocuments();
-      console.log(`📊 DB STATUS: Users: ${uC}, EventTypes: ${eC}, Bookings: ${bC}`);
-    } catch {}
-
     console.log('✨ Startup complete and database ready!\n');
 
   } catch (err) {
