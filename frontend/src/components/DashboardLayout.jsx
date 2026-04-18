@@ -16,10 +16,12 @@ import {
   ExternalLink,
   Copy,
   LogOut,
-  Search,
-  ChevronRight,
-  LayoutDashboard
+  LayoutDashboard,
+  Database,
+  ShieldCheck,
+  ShieldAlert
 } from 'lucide-react';
+import api from '../utils/api';
 
 const sidebarVariants = {
   hidden: { opacity: 0, x: -20 },
@@ -63,15 +65,43 @@ const SidebarItem = ({ icon: Icon, label, path, active, badge }) => (
   </Link>
 );
 
+const StatRow = ({ label, value, primary, success }) => (
+  <div className="flex items-center justify-between py-2 border-b border-[#2B2B2B] last:border-0">
+    <span className="text-[13px] text-[#71717A]">{label}</span>
+    <span className={`text-[14px] font-mono ${
+      primary ? 'text-emerald-400 font-bold' : 
+      success ? 'text-emerald-500' :
+      value === 'NO' ? 'text-red-500' : 'text-white'
+    }`}>
+      {value}
+    </span>
+  </div>
+);
+
 export default function DashboardLayout({ children, title, subtitle, actions }) {
   const { user, logout } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
   const [showUserMenu, setShowUserMenu] = useState(false);
 
+  const [dbData, setDbData] = useState(null);
+  const [checkingDb, setCheckingDb] = useState(false);
+
   const handleLogout = () => {
     logout();
     navigate('/');
+  };
+
+  const checkDatabase = async () => {
+    setCheckingDb(true);
+    try {
+      const res = await api.get('/debug/db');
+      setDbData(res.data);
+    } catch {
+      setDbData({ error: 'Could not connect to API' });
+    } finally {
+      setCheckingDb(false);
+    }
   };
 
   const navItems = [
@@ -229,8 +259,57 @@ export default function DashboardLayout({ children, title, subtitle, actions }) 
             <Settings className="w-4 h-4" />
             Settings
           </Link>
+
+          <button
+            onClick={checkDatabase}
+            disabled={checkingDb}
+            className="w-full flex items-center gap-3 px-3 py-2 rounded-md text-[11px] font-bold uppercase tracking-wider text-[#52525B] hover:text-emerald-400 hover:bg-emerald-400/5 transition-all mt-4 border border-[#2B2B2B] group"
+          >
+            <Database className="w-3.5 h-3.5 group-hover:animate-pulse" />
+            {checkingDb ? 'Checking...' : 'DB Status'}
+            {dbData && (
+              <span className={`ml-auto w-2 h-2 rounded-full ${dbData.mongodb_connected ? 'bg-emerald-500' : 'bg-red-500'}`} />
+            )}
+          </button>
         </div>
       </aside>
+
+      {/* DB Stats Overlay */}
+      <AnimatePresence>
+        {dbData && (
+          <motion.div 
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[100] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4"
+            onClick={() => setDbData(null)}
+          >
+            <motion.div 
+              initial={{ scale: 0.9, y: 20 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.9, y: 20 }}
+              className="bg-[#1A1A1A] border border-[#2B2B2B] rounded-2xl p-8 max-w-sm w-full shadow-2xl"
+              onClick={e => e.stopPropagation()}
+            >
+              <div className="flex items-center gap-3 mb-6">
+                <Database className="w-5 h-5 text-emerald-400" />
+                <h3 className="text-lg font-bold text-white">Database Diagnostics</h3>
+                <button onClick={() => setDbData(null)} className="ml-auto text-[#71717A] hover:text-white"><LogOut className="w-4 h-4 rotate-180" /></button>
+              </div>
+              
+              <div className="space-y-4">
+                <StatRow label="MongoDB Connected" value={dbData.mongodb_connected ? 'YES' : 'NO'} success={dbData.mongodb_connected} />
+                <StatRow label="Stored Bookings" value={dbData.bookings} primary />
+                <StatRow label="Event Types" value={dbData.eventTypes} />
+                <StatRow label="Teams Created" value={dbData.teams} />
+                <StatRow label="Environment" value={dbData.env} />
+              </div>
+
+              <div className="mt-8 pt-6 border-t border-[#2B2B2B]">
+                <p className="text-[12px] text-[#71717A] leading-relaxed">
+                  These counts are fetched directly from the database server. If the counts are greater than 0, your data exists and is safe.
+                </p>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* ── Main Content ────────────────────────────────── */}
       <main className="flex-1 ml-[220px] min-h-screen">

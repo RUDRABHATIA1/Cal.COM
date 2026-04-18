@@ -51,6 +51,23 @@ const DATA_DIR = path.join(__dirname, 'data');
 const IS_PROD = process.env.NODE_ENV === 'production';
 
 // Start HTTP server immediately (Critical for Railway/Render health checks)
+app.get('/api/debug/db', async (req, res) => {
+  try {
+    const counts = {
+      users: await mongoose.model('User').countDocuments(),
+      eventTypes: await mongoose.model('EventType').countDocuments(),
+      bookings: await mongoose.model('Booking').countDocuments(),
+      teams: await mongoose.model('Team').countDocuments(),
+      mongodb_connected: mongoose.connection.readyState === 1,
+      env: process.env.NODE_ENV,
+      has_uri: !!process.env.MONGODB_URI
+    };
+    res.json(counts);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`\n🚀 Cal.com Clone API is starting...`);
   console.log(`📡 Listening on: http://0.0.0.0:${PORT}`);
