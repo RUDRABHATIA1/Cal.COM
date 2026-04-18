@@ -28,24 +28,24 @@ const EventTypeRow = ({ event, onDelete, onEdit, onCopy, onToggle, onMoveUp, onM
       className="flex items-center border-b border-[#2B2B2B] last:border-0 hover:bg-[#1A1A1A] transition-colors cursor-pointer group px-4 py-4"
       onClick={() => onEdit(event)}
     >
-      {/* Left: Reorder arrows */}
+      {/* Left: Reorder arrows (Box-like structure) */}
       <div 
-        className="flex flex-col gap-0.5 mr-4 opacity-0 group-hover:opacity-100 transition-opacity"
+        className="flex flex-col gap-1 mr-4 opacity-0 group-hover:opacity-100 transition-opacity"
         onClick={(e) => e.stopPropagation()}
       >
         <button
           disabled={isFirst}
           onClick={() => onMoveUp(event._id)}
-          className="p-1 rounded-md text-[#52525B] hover:text-white hover:bg-[#2B2B2B] disabled:opacity-0 transition-all border border-transparent hover:border-[#3F3F46]"
+          className="w-7 h-7 flex items-center justify-center rounded-md bg-[#1A1A1A] border border-[#2B2B2B] text-[#52525B] hover:text-white hover:border-[#3F3F46] hover:bg-[#2B2B2B] disabled:opacity-0 transition-all cursor-pointer"
         >
-          <ChevronUp className="w-3.5 h-3.5" />
+          <ChevronUp className="w-4 h-4" />
         </button>
         <button
           disabled={isLast}
           onClick={() => onMoveDown(event._id)}
-          className="p-1 rounded-md text-[#52525B] hover:text-white hover:bg-[#2B2B2B] disabled:opacity-0 transition-all border border-transparent hover:border-[#3F3F46]"
+          className="w-7 h-7 flex items-center justify-center rounded-md bg-[#1A1A1A] border border-[#2B2B2B] text-[#52525B] hover:text-white hover:border-[#3F3F46] hover:bg-[#2B2B2B] disabled:opacity-0 transition-all cursor-pointer"
         >
-          <ChevronDown className="w-3.5 h-3.5" />
+          <ChevronDown className="w-4 h-4" />
         </button>
       </div>
 
