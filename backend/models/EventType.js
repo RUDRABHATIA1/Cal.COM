@@ -50,6 +50,7 @@ const eventTypeSchema = new mongoose.Schema({
   teamId:               { type: mongoose.Schema.Types.ObjectId, ref: 'Team', default: null },
 
   // Metadata
+  position:             { type: Number, default: 0 },
   metadata:             { type: mongoose.Schema.Types.Mixed, default: {} },
 }, { timestamps: true });
 

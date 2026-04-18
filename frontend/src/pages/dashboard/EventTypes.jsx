@@ -3,14 +3,14 @@ import DashboardLayout from '../../components/DashboardLayout';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Plus, MoreHorizontal, Copy, ExternalLink, Trash2,
-  Check, Share2, Settings, Clock, Search
+  Check, Share2, Settings, Clock, Search, ChevronUp, ChevronDown
 } from 'lucide-react';
 import api from '../../utils/api';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 
 // ── Single row ───────────────────────────────────────────────────────────────
-const EventTypeRow = ({ event, onDelete, onEdit, onCopy, onToggle, index, username }) => {
+const EventTypeRow = ({ event, onDelete, onEdit, onCopy, onToggle, onMoveUp, onMoveDown, isFirst, isLast, index, username }) => {
   const [menuOpen, setMenuOpen] = useState(false);
 
   useEffect(() => {
@@ -24,17 +24,38 @@ const EventTypeRow = ({ event, onDelete, onEdit, onCopy, onToggle, index, userna
     <motion.div
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.3, delay: index * 0.07 }}
-      className="flex items-center border-b border-[#2B2B2B] last:border-0 hover:bg-[#1A1A1A] transition-colors cursor-pointer group px-6 py-4"
+      transition={{ duration: 0.3, delay: index * 0.05 }}
+      className="flex items-center border-b border-[#2B2B2B] last:border-0 hover:bg-[#1A1A1A] transition-colors cursor-pointer group px-4 py-4"
       onClick={() => onEdit(event)}
     >
-      {/* Left: title + slug + badge */}
+      {/* Left: Reorder arrows */}
+      <div 
+        className="flex flex-col gap-0.5 mr-4 opacity-0 group-hover:opacity-100 transition-opacity"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <button
+          disabled={isFirst}
+          onClick={() => onMoveUp(event._id)}
+          className="p-1 rounded-md text-[#52525B] hover:text-white hover:bg-[#2B2B2B] disabled:opacity-0 transition-all border border-transparent hover:border-[#3F3F46]"
+        >
+          <ChevronUp className="w-3.5 h-3.5" />
+        </button>
+        <button
+          disabled={isLast}
+          onClick={() => onMoveDown(event._id)}
+          className="p-1 rounded-md text-[#52525B] hover:text-white hover:bg-[#2B2B2B] disabled:opacity-0 transition-all border border-transparent hover:border-[#3F3F46]"
+        >
+          <ChevronDown className="w-3.5 h-3.5" />
+        </button>
+      </div>
+
+      {/* Content: title + slug + badge */}
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2 flex-wrap">
           <span className="text-[15px] font-semibold text-white">{event.title}</span>
           <span className="text-[13px] text-[#52525B]">/{event.slug}</span>
         </div>
-        <div className="mt-1.5">
+        <div className="mt-1.5 flex items-center gap-2">
           <span className="inline-flex items-center gap-1.5 bg-[#1E1E1E] border border-[#3F3F46] text-[#A1A1AA] text-[12px] font-medium px-2 py-0.5 rounded-md">
             <Clock className="w-3 h-3" />
             {event.length}m
@@ -270,6 +291,26 @@ export default function EventTypes() {
     loadEvents();
   };
 
+  const handleReorder = async (id, direction) => {
+    // Optimistic UI update
+    const idx = events.findIndex(e => e._id === id);
+    if (idx === -1) return;
+    const targetIdx = direction === 'up' ? idx - 1 : idx + 1;
+    if (targetIdx < 0 || targetIdx >= events.length) return;
+
+    const newEvents = [...events];
+    const temp = newEvents[idx];
+    newEvents[idx] = newEvents[targetIdx];
+    newEvents[targetIdx] = temp;
+    setEvents(newEvents);
+
+    try {
+      await api.patch(`/event-types/${id}/reorder`, { direction });
+    } catch {
+      loadEvents(); // Revert on failure
+    }
+  };
+
   const filtered = events.filter(e =>
     e.title.toLowerCase().includes(search.toLowerCase()) ||
     e.slug.toLowerCase().includes(search.toLowerCase())
@@ -326,10 +367,14 @@ export default function EventTypes() {
               index={i}
               event={evt}
               username={username}
+              isFirst={i === 0}
+              isLast={i === filtered.length - 1}
               onEdit={(e) => navigate(`/dashboard/event-types/${e._id}`)}
               onCopy={handleCopy}
               onToggle={handleToggle}
               onDelete={handleDelete}
+              onMoveUp={(id) => handleReorder(id, 'up')}
+              onMoveDown={(id) => handleReorder(id, 'down')}
             />
           ))}
         </div>
