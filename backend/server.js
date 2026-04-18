@@ -1,7 +1,8 @@
-require('dotenv').config({ path: __dirname + '/.env' });
+require('dotenv').config();
 const express  = require('express');
 const mongoose = require('mongoose');
 const cors     = require('cors');
+const path     = require('path');
 const seed     = require('./seed');
 
 const app = express();
@@ -44,61 +45,63 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', message: 'Cal.com Clone API is running' });
 });
 
-// Database + start
-const path = require('path');
+// ── STARTUP SEQUENCE ──────────────────────────────────────────────────────────
 const PORT = process.env.PORT || 5000;
 const DATA_DIR = path.join(__dirname, 'data');
+const IS_PROD = process.env.NODE_ENV === 'production';
 
-async function startServer() {
+// Start HTTP server immediately (Critical for Railway/Render health checks)
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`\n🚀 Cal.com Clone API is starting...`);
+  console.log(`📡 Listening on: http://0.0.0.0:${PORT}`);
+  console.log(`🌍 Mode: ${IS_PROD ? 'PRODUCTION' : 'DEVELOPMENT'}`);
+  console.log(`──────────────────────────────────────────\n`);
+});
+
+async function startDatabase() {
   try {
-    // ── PRODUCTION MODE (Render) ─────────────────────────────────────────────
-    if (process.env.NODE_ENV === 'production') {
-      console.log('Connecting to Production MongoDB Atlas...');
+    if (IS_PROD) {
+      console.log('⏳ Connecting to Production MongoDB Atlas...');
+      if (!process.env.MONGODB_URI) {
+        throw new Error('MONGODB_URI is missing in environment variables!');
+      }
       await mongoose.connect(process.env.MONGODB_URI);
       console.log('✅ Connected to MongoDB Atlas!');
-      
-      // Auto-seed for safety 
-      await seed();
-      
-      app.listen(PORT, '0.0.0.0', () => console.log(`🚀 Production Server running on port ${PORT}`));
-      return;
+    } else {
+      console.log('⏳ Starting persistent local database (Development Mode)...');
+      try {
+        const { MongoMemoryServer } = require('mongodb-memory-server');
+        const mongoServer = await MongoMemoryServer.create({
+          instance: { dbPath: DATA_DIR, storageEngine: 'wiredTiger' },
+        });
+        await mongoose.connect(mongoServer.getUri());
+        console.log('✅ Connected to local MongoDB!');
+        console.log('📂 Data directory:', DATA_DIR);
+      } catch (devErr) {
+        console.warn('⚠️  Could not start persistent local DB. Falling back to in-memory...');
+        const { MongoMemoryServer: MMS } = require('mongodb-memory-server');
+        const memServer = await MMS.create();
+        await mongoose.connect(memServer.getUri());
+        console.log('✅ Connected to in-memory MongoDB (Data will NOT persist)');
+      }
     }
 
-    // ── LOCAL DEV MODE (MongoMemoryServer) ───────────────────────────────────
-    console.log('Starting persistent local database...');
-    const { MongoMemoryServer } = require('mongodb-memory-server');
-    const mongoServer = await MongoMemoryServer.create({
-      instance: { dbPath: DATA_DIR, storageEngine: 'wiredTiger' },
-    });
-    await mongoose.connect(mongoServer.getUri());
-    console.log('✅ Connected to persistent local MongoDB!');
-    console.log('   Data stored in:', DATA_DIR);
-
-    // Seed the database with John Doe
+    // Auto-seed for safety 
+    console.log('🌱 Starting database seeding...');
     await seed();
+    console.log('✨ Startup complete and database ready!\n');
 
-    app.listen(PORT, () => {
-      console.log(`🚀 Server running on port ${PORT}`);
-    });
   } catch (err) {
-    console.error('Failed to start server:', err.message);
-    if (process.env.NODE_ENV === 'production') {
-      console.error('❌ CRITICAL: Could not connect to MongoDB Atlas. Please ensure Network Access is set to 0.0.0.0/0 in Atlas!');
-      process.exit(1);
-    }
-    try {
-      console.log('Falling back to in-memory database...');
-      const { MongoMemoryServer: MMS } = require('mongodb-memory-server');
-      const memServer = await MMS.create();
-      await mongoose.connect(memServer.getUri());
-      console.log('✅ Connected to in-memory MongoDB (data will NOT persist)');
-      await seed();
-      app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
-    } catch (fallbackErr) {
-      console.error('Fatal: Could not start database', fallbackErr);
-      process.exit(1);
+    console.error('\n❌ FATAL STARTUP ERROR:', err.message);
+    if (IS_PROD) {
+      console.error('────────────────────────────────────────────────────────────────');
+      console.error('1. Check if MONGODB_URI is set correctly in Railway dashboard.');
+      console.error('2. Ensure MongoDB Atlas IP Whitelist allows 0.0.0.0/0.');
+      console.error('────────────────────────────────────────────────────────────────\n');
+      // In production, we exit if DB fails so container can restart
+      setTimeout(() => process.exit(1), 5000); 
     }
   }
 }
 
-startServer();
+startDatabase();

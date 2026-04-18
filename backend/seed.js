@@ -14,6 +14,8 @@ const JOHN_EMAIL    = 'john@cal.com';
 const JOHN_USERNAME = 'john';
 
 async function seed() {
+  try {
+    console.log('   Starting seed script...');
   // ── 1. User ────────────────────────────────────────────────────────────────
   let john = await User.findOne({ email: JOHN_EMAIL });
   if (!john) {
@@ -337,7 +339,10 @@ async function seed() {
     console.log('✅ Seed: Created 2 sample workflows');
   }
 
-  console.log('🌱 Database seeding complete.');
+    console.log('🌱 Database seeding complete.');
+  } catch (err) {
+    console.error('⚠️ Seeding warning (non-fatal):', err.message);
+  }
 }
 
 module.exports = seed;
