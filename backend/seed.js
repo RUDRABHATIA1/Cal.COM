@@ -298,6 +298,26 @@ async function seed() {
         makeBooking(et15, 'Bruce Wayne', 'bruce@waynecorp.com', 'America/New_York', -1, 23, 'ACCEPTED', {
           notes: 'Nightly check-in regarding city planning.',
         }),
+
+        // ── Unconfirmed (Pending) ──
+        makeBooking(et30, 'Clark Kent', 'clark@dailyplanet.com', 'America/New_York', 3, 13, 'PENDING', {
+          notes: 'Discussing interview questions for the upcoming profile.',
+        }),
+
+        // ── More Past Bookings ──
+        makeBooking(et60 || et30, 'Tony Stark', 'tony@stark.id', 'America/New_York', -45, 10, 'ACCEPTED', {
+          notes: 'Initial consulting session on arc reactor efficiency.',
+          meetingUrl: 'https://meet.google.com/tony-stark-private',
+        }),
+
+        // ── Recurring (Simulated via multiple bookings) ──
+        ...[1, 2, 3, 4].map(w => 
+          makeBooking(et30, 'Wanda Maximoff', 'wanda@avengers.org', 'America/New_York', w * 7, 10, 'ACCEPTED', {
+            title: `Weekly Sync: Wanda <> John Doe (Week ${w})`,
+            notes: 'Regular check-in on project status.',
+            metadata: { recurring: true, week: w }
+          })
+        ),
       ];
 
       await Booking.insertMany(bookings);
