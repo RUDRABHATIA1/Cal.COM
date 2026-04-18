@@ -9,6 +9,7 @@ const EventType     = require('./models/EventType');
 const Availability  = require('./models/Availability');
 const Booking       = require('./models/Booking');
 const Workflow      = require('./models/Workflow');
+const Team          = require('./models/Team');
 
 const JOHN_EMAIL    = 'john@cal.com';
 const JOHN_USERNAME = 'john';
@@ -288,6 +289,15 @@ async function seed() {
         makeBooking(et15, 'Olivia Green', 'olivia@design.studio', 'Europe/Paris', -14, 10, 'ACCEPTED', {
           meetingUrl: 'https://meet.google.com/jjj-kkkk-lll',
         }),
+        makeBooking(et60 || et30, 'Sam Wilson', 'sam@marvel.com', 'America/New_York', 1, 15, 'ACCEPTED', {
+          notes: 'Discussing shield maintenance and flight schedules.',
+        }),
+        makeBooking(et30, 'Peter Parker', 'peter@dailybugle.com', 'America/New_York', 2, 11, 'PENDING', {
+          notes: 'Need career advice on photography and science.',
+        }),
+        makeBooking(et15, 'Bruce Wayne', 'bruce@waynecorp.com', 'America/New_York', -1, 23, 'ACCEPTED', {
+          notes: 'Nightly check-in regarding city planning.',
+        }),
       ];
 
       await Booking.insertMany(bookings);
@@ -338,6 +348,26 @@ async function seed() {
     ]);
     console.log('✅ Seed: Created 2 sample workflows');
   }
+
+    // ── 6. Sample Teams ───────────────────────────────────────────────────────
+    const existingTeams = await Team.countDocuments({ 'members.userId': john._id });
+    if (existingTeams === 0) {
+      await Team.insertMany([
+        {
+          name: 'Cal.com Design System',
+          slug: 'design-system',
+          bio:  'Building the foundation of our UI/UX patterns.',
+          members: [{ userId: john._id, role: 'OWNER', accepted: true }]
+        },
+        {
+          name: 'Growth & Marketing',
+          slug: 'growth',
+          bio:  'Scaling the platform to the next million users.',
+          members: [{ userId: john._id, role: 'ADMIN', accepted: true }]
+        }
+      ]);
+      console.log('✅ Seed: Created 2 sample teams for John');
+    }
 
     console.log('🌱 Database seeding complete.');
   } catch (err) {
