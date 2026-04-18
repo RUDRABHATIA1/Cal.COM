@@ -203,14 +203,19 @@ async function seed() {
   }
 
   // ── 4. Sample Bookings ─────────────────────────────────────────────────────
-  const existingBookings = await Booking.countDocuments({ hostUserId: john._id });
-  if (existingBookings === 0) {
-    const et15 = await EventType.findOne({ userId: john._id, slug: '15min' });
-    const et30 = await EventType.findOne({ userId: john._id, slug: '30min' });
-    const et60 = await EventType.findOne({ userId: john._id, slug: '60min' });
-    const etPP = await EventType.findOne({ userId: john._id, slug: 'pair-programming' });
-
-    if (et15 && et30) {
+  // We check for a specific sample booking to see if we need to refresh the samples
+  const sampleExists = await Booking.findOne({ hostUserId: john._id, attendeeEmail: 'clark@dailyplanet.com' });
+  
+  if (!sampleExists) {
+    console.log('🌱 Seed: Sample bookings missing or incomplete. Refreshing...');
+    
+    // Find ANY event types for John to use as templates
+    const allET = await EventType.find({ userId: john._id });
+    if (allET.length > 0) {
+      const et15 = allET.find(e => e.slug === '15min') || allET[0];
+      const et30 = allET.find(e => e.slug === '30min') || allET[Math.min(1, allET.length - 1)];
+      const et60 = allET.find(e => e.slug === '60min') || allET[Math.min(2, allET.length - 1)];
+      const etPP = allET.find(e => e.slug === 'pair-programming') || allET[0];
       const now = new Date();
       const addDays  = (d, n) => new Date(d.getTime() + n * 864e5);
       const addHours = (d, h) => new Date(d.getTime() + h * 36e5);
@@ -231,6 +236,7 @@ async function seed() {
           title:            `${name} <> John Doe`,
           status,
           location:         et.location || 'Google Meet',
+          metadata:         { isSample: true, ...extra.metadata },
           ...extra,
         };
       };
@@ -320,8 +326,13 @@ async function seed() {
         ),
       ];
 
+        ),
+      ];
+ 
       await Booking.insertMany(bookings);
-      console.log(`✅ Seed: Created ${bookings.length} sample bookings`);
+      console.log(`✅ Seed: Enforced ${bookings.length} sample bookings for John Doe`);
+    } else {
+      console.warn('⚠️ Seed: No event types found for John. Skipping booking seeding.');
     }
   }
 

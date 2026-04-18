@@ -259,6 +259,7 @@ export default function Bookings() {
   const fetchBookings = async () => {
     try {
       const res = await api.get('/bookings');
+      console.log('API Bookings Response:', res.data);
       setBookings(res.data);
     } catch (err) {
       console.error('Failed to fetch bookings', err);
