@@ -51,49 +51,62 @@ async function seed() {
     const threeWeeks = new Date(today.getTime() + 21 * 864e5);
     const fmtDate = d => d.toISOString().split('T')[0];
 
-    avail = await Availability.create({
-      userId:    john._id,
-      name:      'Working Hours',
-      isDefault: true,
-      timezone:  'Asia/Kolkata',
-      days: [
-        { day: 'Sunday',    enabled: false, startTime: '09:00', endTime: '17:00' },
-        { day: 'Monday',    enabled: true,  startTime: '09:00', endTime: '17:00' },
-        { day: 'Tuesday',   enabled: true,  startTime: '09:00', endTime: '17:00' },
-        { day: 'Wednesday', enabled: true,  startTime: '09:00', endTime: '17:00' },
-        { day: 'Thursday',  enabled: true,  startTime: '09:00', endTime: '17:00' },
-        { day: 'Friday',    enabled: true,  startTime: '09:00', endTime: '17:00' },
-        { day: 'Saturday',  enabled: false, startTime: '09:00', endTime: '17:00' },
-      ],
-      overrides: [
-        { date: fmtDate(nextWeek),   isOff: true,  startTime: '09:00', endTime: '17:00' },  // Day off
-        { date: fmtDate(twoWeeks),   isOff: false, startTime: '10:00', endTime: '14:00' },  // Short day
-        { date: fmtDate(threeWeeks), isOff: false, startTime: '08:00', endTime: '20:00' },  // Extended hours
-      ],
-    });
+    await Availability.findOneAndUpdate(
+      { userId: john._id, name: 'Working Hours' },
+      {
+        $setOnInsert: {
+          userId:    john._id,
+          name:      'Working Hours',
+          isDefault: true,
+          timezone:  'Asia/Kolkata',
+          days: [
+            { day: 'Sunday',    enabled: false, startTime: '09:00', endTime: '17:00' },
+            { day: 'Monday',    enabled: true,  startTime: '09:00', endTime: '17:00' },
+            { day: 'Tuesday',   enabled: true,  startTime: '09:00', endTime: '17:00' },
+            { day: 'Wednesday', enabled: true,  startTime: '09:00', endTime: '17:00' },
+            { day: 'Thursday',  enabled: true,  startTime: '09:00', endTime: '17:00' },
+            { day: 'Friday',    enabled: true,  startTime: '09:00', endTime: '17:00' },
+            { day: 'Saturday',  enabled: false, startTime: '09:00', endTime: '17:00' },
+          ],
+          overrides: [
+            { date: fmtDate(nextWeek),   isOff: true,  startTime: '09:00', endTime: '17:00' },
+            { date: fmtDate(twoWeeks),   isOff: false, startTime: '10:00', endTime: '14:00' },
+            { date: fmtDate(threeWeeks), isOff: false, startTime: '08:00', endTime: '20:00' },
+          ],
+        }
+      },
+      { upsert: true, new: true }
+    );
+    const avail = await Availability.findOne({ userId: john._id, isDefault: true });
     await User.findByIdAndUpdate(john._id, { defaultScheduleId: avail._id });
-    console.log('✅ Seed: Created default availability (Working Hours) with date overrides');
+    console.log('✅ Seed: Ensured default availability (Working Hours)');
   }
 
   // ── 2b. Additional Availability Schedule ───────────────────────────────────
   const extraAvail = await Availability.findOne({ userId: john._id, name: 'Evening & Weekends' });
   if (!extraAvail) {
-    await Availability.create({
-      userId:    john._id,
-      name:      'Evening & Weekends',
-      isDefault: false,
-      timezone:  'Asia/Kolkata',
-      days: [
-        { day: 'Sunday',    enabled: true,  startTime: '10:00', endTime: '14:00' },
-        { day: 'Monday',    enabled: true,  startTime: '18:00', endTime: '21:00' },
-        { day: 'Tuesday',   enabled: true,  startTime: '18:00', endTime: '21:00' },
-        { day: 'Wednesday', enabled: false, startTime: '18:00', endTime: '21:00' },
-        { day: 'Thursday',  enabled: true,  startTime: '18:00', endTime: '21:00' },
-        { day: 'Friday',    enabled: true,  startTime: '18:00', endTime: '21:00' },
-        { day: 'Saturday',  enabled: true,  startTime: '10:00', endTime: '16:00' },
-      ],
-    });
-    console.log('✅ Seed: Created "Evening & Weekends" schedule');
+    await Availability.findOneAndUpdate(
+      { userId: john._id, name: 'Evening & Weekends' },
+      {
+        $setOnInsert: {
+          userId:    john._id,
+          name:      'Evening & Weekends',
+          isDefault: false,
+          timezone:  'Asia/Kolkata',
+          days: [
+            { day: 'Sunday',    enabled: true,  startTime: '10:00', endTime: '14:00' },
+            { day: 'Monday',    enabled: true,  startTime: '18:00', endTime: '21:00' },
+            { day: 'Tuesday',   enabled: true,  startTime: '18:00', endTime: '21:00' },
+            { day: 'Wednesday', enabled: false, startTime: '18:00', endTime: '21:00' },
+            { day: 'Thursday',  enabled: true,  startTime: '18:00', endTime: '21:00' },
+            { day: 'Friday',    enabled: true,  startTime: '18:00', endTime: '21:00' },
+            { day: 'Saturday',  enabled: true,  startTime: '10:00', endTime: '16:00' },
+          ],
+        }
+      },
+      { upsert: true }
+    );
+    console.log('✅ Seed: Ensured "Evening & Weekends" schedule');
   }
 
   // ── 3. Event Types ─────────────────────────────────────────────────────────
@@ -323,9 +336,6 @@ async function seed() {
             notes: 'Regular check-in on project status.',
             metadata: { recurring: true, week: w }
           })
-        ),
-      ];
-
         ),
       ];
  

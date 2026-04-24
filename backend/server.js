@@ -4,7 +4,7 @@ const mongoose = require('mongoose');
 const cors     = require('cors');
 const path     = require('path');
 
-// Pre-register models to prevent mongoose "MissingSchemaError" during diagnostics
+// Pre-register models
 require('./models/User');
 require('./models/EventType');
 require('./models/Availability');
@@ -12,21 +12,24 @@ require('./models/Booking');
 require('./models/Team');
 require('./models/Workflow');
 
-const seed     = require('./seed');
+const seed = require('./seed');
+const app  = express();
 
-const app = express();
+// ── CORS ───────────────────────────────────────────────────────────────────────
+app.use(cors({
+  origin: (origin, cb) => cb(null, true), // allow all origins for clone app
+  credentials: true,
+}));
 
-// Middleware
-app.use(cors());
-app.use(express.json());
+app.use(express.json({ limit: '1mb' }));
 
-// Request Logger
-app.use((req, res, next) => {
-  console.log(`${new Date().toISOString()} - ${req.method} ${req.path}`);
+// ── Request Logger ─────────────────────────────────────────────────────────────
+app.use((req, _res, next) => {
+  console.log(`${new Date().toISOString()} ${req.method} ${req.path}`);
   next();
 });
 
-// DB Status Middleware
+// ── DB Guard Middleware ────────────────────────────────────────────────────────
 app.use((req, res, next) => {
   if (
     mongoose.connection.readyState !== 1 &&
@@ -35,99 +38,167 @@ app.use((req, res, next) => {
   ) {
     return res.status(503).json({
       error: 'Database Unavailable',
-      message: 'The server is unable to connect to the database.',
+      message: 'Server is connecting to the database. Please retry in a moment.',
     });
   }
   next();
 });
 
-// Routes
-app.use('/api/auth',        require('./routes/auth'));
-app.use('/api/users',       require('./routes/users'));
-app.use('/api/event-types', require('./routes/eventTypes'));
-app.use('/api/availability',require('./routes/availability'));
-app.use('/api/bookings',    require('./routes/bookings'));
-app.use('/api/teams',       require('./routes/teams'));
+// ── Routes ─────────────────────────────────────────────────────────────────────
+app.use('/api/auth',         require('./routes/auth'));
+app.use('/api/users',        require('./routes/users'));
+app.use('/api/event-types',  require('./routes/eventTypes'));
+app.use('/api/availability', require('./routes/availability'));
+app.use('/api/bookings',     require('./routes/bookings'));
+app.use('/api/teams',        require('./routes/teams'));
 
-// Health
-app.get('/api/health', (req, res) => {
-  res.json({ status: 'ok', message: 'Cal.com Clone API is running' });
+// ── Health ─────────────────────────────────────────────────────────────────────
+app.get('/api/health', (_req, res) => {
+  res.json({
+    status: 'ok',
+    db: mongoose.connection.readyState === 1 ? 'connected' : 'disconnected',
+    uptime: Math.floor(process.uptime()),
+  });
 });
 
-// ── STARTUP SEQUENCE ──────────────────────────────────────────────────────────
-const PORT = process.env.PORT || 5000;
-const DATA_DIR = path.join(__dirname, 'data');
-const IS_PROD = process.env.NODE_ENV === 'production';
-
-// Start HTTP server immediately (Critical for Railway/Render health checks)
-app.get('/api/debug/db', async (req, res) => {
+app.get('/api/debug/db', async (_req, res) => {
   try {
-    const counts = {
-      users: await mongoose.model('User').countDocuments(),
+    if (mongoose.connection.readyState !== 1) {
+      return res.status(503).json({ error: 'DB not connected', readyState: mongoose.connection.readyState });
+    }
+    res.json({
+      users:      await mongoose.model('User').countDocuments(),
       eventTypes: await mongoose.model('EventType').countDocuments(),
-      bookings: await mongoose.model('Booking').countDocuments(),
-      teams: await mongoose.model('Team').countDocuments(),
-      mongodb_connected: mongoose.connection.readyState === 1,
-      env: process.env.NODE_ENV,
-      has_uri: !!process.env.MONGODB_URI
-    };
-    res.json(counts);
+      bookings:   await mongoose.model('Booking').countDocuments(),
+      teams:      await mongoose.model('Team').countDocuments(),
+      connected:  true,
+      env:        process.env.NODE_ENV || 'development',
+      has_uri:    !!process.env.MONGODB_URI,
+    });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
 
-app.listen(PORT, '0.0.0.0', () => {
-  console.log(`\n🚀 Cal.com Clone API is starting...`);
-  console.log(`📡 Listening on: http://0.0.0.0:${PORT}`);
-  console.log(`🌍 Mode: ${IS_PROD ? 'PRODUCTION' : 'DEVELOPMENT'}`);
+// ── 404 & Global Error Handlers ────────────────────────────────────────────────
+app.use((_req, res) => res.status(404).json({ error: 'Route not found' }));
+
+app.use((err, _req, res, _next) => {
+  console.error('Unhandled error:', err.message);
+  res.status(500).json({ error: 'Internal server error', message: err.message });
+});
+
+// ── Start HTTP Server ──────────────────────────────────────────────────────────
+const PORT = process.env.PORT || 5000;
+
+const server = app.listen(PORT, '0.0.0.0', () => {
+  console.log(`\n🚀 Cal.com Clone API starting...`);
+  console.log(`📡 Listening on port ${PORT}`);
+  console.log(`🗄  DB: ${process.env.MONGODB_URI ? 'MongoDB Atlas' : 'Local MongoMemoryServer'}`);
   console.log(`──────────────────────────────────────────\n`);
 });
 
-async function startDatabase() {
-  try {
-    if (IS_PROD) {
-      console.log('⏳ Connecting to Production MongoDB Atlas...');
-      if (!process.env.MONGODB_URI) {
-        throw new Error('MONGODB_URI is missing in environment variables!');
-      }
-      await mongoose.connect(process.env.MONGODB_URI);
+// ── Graceful Shutdown (SIGTERM from Railway/Docker) ────────────────────────────
+const shutdown = (signal) => {
+  console.log(`\n${signal} received — shutting down gracefully...`);
+  server.close(async () => {
+    try {
+      await mongoose.connection.close(false);
+      console.log('✅ MongoDB connection closed.');
+    } catch (e) {
+      console.error('Error closing MongoDB:', e.message);
+    }
+    process.exit(0);
+  });
+  // Force exit after 15s if graceful shutdown hangs
+  setTimeout(() => { console.error('Forced shutdown.'); process.exit(1); }, 15000);
+};
+
+process.on('SIGTERM', () => shutdown('SIGTERM'));
+process.on('SIGINT',  () => shutdown('SIGINT'));
+
+// ── Prevent crashes from unhandled promise rejections ─────────────────────────
+// Node 15+ exits on unhandledRejection by default — this prevents that crash loop
+process.on('unhandledRejection', (reason) => {
+  console.error('⚠️  Unhandled Promise Rejection (non-fatal):', reason);
+});
+
+process.on('uncaughtException', (err) => {
+  console.error('❌ Uncaught Exception:', err.message);
+  // Only exit for truly unrecoverable errors
+  process.exit(1);
+});
+
+// ── Database Connection ────────────────────────────────────────────────────────
+// KEY FIX: Use MONGODB_URI *presence* to decide mode, not NODE_ENV.
+// This ensures Railway always uses Atlas when the env var is set.
+const USE_ATLAS = !!process.env.MONGODB_URI;
+const DATA_DIR  = path.join(__dirname, 'data');
+
+const MONGOOSE_OPTS = {
+  serverSelectionTimeoutMS: 15000,
+  socketTimeoutMS:          45000,
+  connectTimeoutMS:         15000,
+  maxPoolSize:              10,
+  minPoolSize:              2,
+  retryWrites:              true,
+};
+
+async function connectDatabase() {
+  if (USE_ATLAS) {
+    console.log('⏳ Connecting to MongoDB Atlas...');
+    try {
+      await mongoose.connect(process.env.MONGODB_URI, MONGOOSE_OPTS);
       console.log('✅ Connected to MongoDB Atlas!');
-    } else {
-      console.log('⏳ Starting persistent local database (Development Mode)...');
+    } catch (err) {
+      console.error('❌ Atlas connection FAILED:', err.message);
+      console.error('→ Check MONGODB_URI in Railway dashboard.');
+      console.error('→ Ensure Atlas IP whitelist includes 0.0.0.0/0.');
+      process.exit(1); // Railway will auto-restart
+    }
+  } else {
+    console.log('⏳ Starting local MongoDB (development mode)...');
+    try {
+      const { MongoMemoryServer } = require('mongodb-memory-server');
+      const mongoServer = await MongoMemoryServer.create({
+        instance: { dbPath: DATA_DIR, storageEngine: 'wiredTiger' },
+      });
+      await mongoose.connect(mongoServer.getUri());
+      console.log('✅ Connected to local persistent MongoDB!');
+      console.log('📂 Data directory:', DATA_DIR);
+    } catch (devErr) {
+      console.warn('⚠️  Persistent local DB failed. Falling back to in-memory...');
       try {
-        const { MongoMemoryServer } = require('mongodb-memory-server');
-        const mongoServer = await MongoMemoryServer.create({
-          instance: { dbPath: DATA_DIR, storageEngine: 'wiredTiger' },
-        });
-        await mongoose.connect(mongoServer.getUri());
-        console.log('✅ Connected to local MongoDB!');
-        console.log('📂 Data directory:', DATA_DIR);
-      } catch (devErr) {
-        console.warn('⚠️  Could not start persistent local DB. Falling back to in-memory...');
         const { MongoMemoryServer: MMS } = require('mongodb-memory-server');
-        const memServer = await MMS.create();
-        await mongoose.connect(memServer.getUri());
-        console.log('✅ Connected to in-memory MongoDB (Data will NOT persist)');
+        const mem = await MMS.create();
+        await mongoose.connect(mem.getUri());
+        console.log('✅ Connected to in-memory MongoDB (data will NOT persist)');
+      } catch (finalErr) {
+        console.error('❌ All DB attempts failed:', finalErr.message);
+        process.exit(1);
       }
     }
+  }
 
-    // Auto-seed for safety 
-    console.log('🌱 Starting database seeding...');
+  // Reconnect event handlers
+  mongoose.connection.on('disconnected', () =>
+    console.warn('⚠️  MongoDB disconnected. Mongoose will auto-reconnect...')
+  );
+  mongoose.connection.on('reconnected', () =>
+    console.log('✅ MongoDB reconnected!')
+  );
+  mongoose.connection.on('error', (err) =>
+    console.error('MongoDB error:', err.message)
+  );
+
+  // Seed
+  try {
+    console.log('🌱 Seeding database...');
     await seed();
-    console.log('✨ Startup complete and database ready!\n');
-
-  } catch (err) {
-    console.error('\n❌ FATAL STARTUP ERROR:', err.message);
-    if (IS_PROD) {
-      console.error('────────────────────────────────────────────────────────────────');
-      console.error('1. Check if MONGODB_URI is set correctly in Railway dashboard.');
-      console.error('2. Ensure MongoDB Atlas IP Whitelist allows 0.0.0.0/0.');
-      console.error('────────────────────────────────────────────────────────────────\n');
-      // In production, we exit if DB fails so container can restart
-      setTimeout(() => process.exit(1), 5000); 
-    }
+    console.log('✨ Database ready!\n');
+  } catch (seedErr) {
+    console.error('⚠️  Seed error (non-fatal):', seedErr.message);
   }
 }
 
-startDatabase();
+connectDatabase();
