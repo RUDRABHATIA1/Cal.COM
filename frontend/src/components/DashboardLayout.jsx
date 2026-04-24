@@ -19,7 +19,8 @@ import {
   LayoutDashboard,
   Database,
   ShieldCheck,
-  ShieldAlert
+  ShieldAlert,
+  Search
 } from 'lucide-react';
 import api from '../utils/api';
 

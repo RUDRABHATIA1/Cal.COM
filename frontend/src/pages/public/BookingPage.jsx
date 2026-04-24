@@ -39,7 +39,7 @@ export default function BookingPage() {
 
   const fetchRescheduleDetails = async () => {
     try {
-      const res = await api.get(`/bookings/public/${rescheduleId}`);
+      const res = await api.get(`/bookings/public/booking/${rescheduleId}`);
       setRescheduleData(res.data);
       setForm({
         name: res.data.attendeeName,
@@ -69,7 +69,7 @@ export default function BookingPage() {
     setSlotsLoading(true);
     try {
       const dateStr = format(selectedDate, 'yyyy-MM-dd');
-      const busyRes = await api.get(`/bookings/public/${data.host.id}/${dateStr}`);
+      const busyRes = await api.get(`/bookings/public/slots/${data.host.id}/${dateStr}`);
       calculateAvailableSlots(availability, busyRes.data);
     } catch (err) {
       console.error('Failed to fetch busy slots', err);

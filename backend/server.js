@@ -154,12 +154,31 @@ async function connectDatabase() {
       console.error('❌ Atlas connection FAILED:', err.message);
       console.error('→ Check MONGODB_URI in Railway dashboard.');
       console.error('→ Ensure Atlas IP whitelist includes 0.0.0.0/0.');
-      process.exit(1); // Railway will auto-restart
+      // In production, we MUST fail if Atlas is expected but unreachable
+      if (process.env.NODE_ENV === 'production') {
+        process.exit(1);
+      }
+      console.warn('⚠️  Continuing in development mode...');
     }
   } else {
+    // Check if we are in production but missing the URI
+    if (process.env.NODE_ENV === 'production' || process.env.RAILWAY_ENVIRONMENT) {
+      console.error('❌ CRITICAL ERROR: MONGODB_URI is missing in production!');
+      console.error('→ Please set MONGODB_URI in your environment variables.');
+      process.exit(1);
+    }
+
     console.log('⏳ Starting local MongoDB (development mode)...');
     try {
-      const { MongoMemoryServer } = require('mongodb-memory-server');
+      // Try to require the memory server only if it exists
+      let MongoMemoryServer;
+      try {
+        const mms = require('mongodb-memory-server');
+        MongoMemoryServer = mms.MongoMemoryServer;
+      } catch (e) {
+        throw new Error('mongodb-memory-server not installed (run npm install --save-dev)');
+      }
+
       const mongoServer = await MongoMemoryServer.create({
         instance: { dbPath: DATA_DIR, storageEngine: 'wiredTiger' },
       });
@@ -167,7 +186,8 @@ async function connectDatabase() {
       console.log('✅ Connected to local persistent MongoDB!');
       console.log('📂 Data directory:', DATA_DIR);
     } catch (devErr) {
-      console.warn('⚠️  Persistent local DB failed. Falling back to in-memory...');
+      console.warn('⚠️  Local DB failed:', devErr.message);
+      console.log('⏳ Falling back to in-memory...');
       try {
         const { MongoMemoryServer: MMS } = require('mongodb-memory-server');
         const mem = await MMS.create();
