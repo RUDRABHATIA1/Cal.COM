@@ -84,6 +84,7 @@ export default function DashboardLayout({ children, title, subtitle, actions }) 
   const location = useLocation();
   const navigate = useNavigate();
   const [showUserMenu, setShowUserMenu] = useState(false);
+  const [showMobileMenu, setShowMobileMenu] = useState(false);
 
   const [dbData, setDbData] = useState(null);
   const [checkingDb, setCheckingDb] = useState(false);
@@ -127,8 +128,25 @@ export default function DashboardLayout({ children, title, subtitle, actions }) 
   return (
     <div className="flex min-h-screen bg-[#101010]">
 
+      {/* ── Mobile Sidebar Overlay ────────────────────── */}
+      <AnimatePresence>
+        {showMobileMenu && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setShowMobileMenu(false)}
+            className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[45] md:hidden"
+          />
+        )}
+      </AnimatePresence>
+
       {/* ── Sidebar ────────────────────────────────────── */}
-      <aside className="w-[220px] shrink-0 fixed inset-y-0 left-0 flex flex-col bg-[#101010] border-r border-[#2B2B2B] z-20">
+      <aside className={`
+        w-[220px] shrink-0 fixed inset-y-0 left-0 flex flex-col bg-[#101010] border-r border-[#2B2B2B] z-50
+        transition-transform duration-300 md:translate-x-0
+        ${showMobileMenu ? 'translate-x-0' : '-translate-x-full'}
+      `}>
 
         {/* User header */}
         <div className="px-3 py-3 border-b border-[#2B2B2B]">
@@ -177,6 +195,7 @@ export default function DashboardLayout({ children, title, subtitle, actions }) 
                 variants={sidebarVariants}
               >
                 <Link to={item.path}
+                  onClick={() => setShowMobileMenu(false)}
                   className={`flex items-center gap-3 px-3 py-2 rounded-md text-[13.5px] font-medium transition-all duration-200 ${
                     isActive ? 'bg-[#2B2B2B] text-white shadow-sm' : 'text-[#A1A1AA] hover:bg-[#1E1E1E] hover:text-white'
                   }`}>
@@ -196,12 +215,14 @@ export default function DashboardLayout({ children, title, subtitle, actions }) 
                       className="ml-7 mt-0.5 space-y-0.5"
                     >
                       <Link to="/dashboard/apps"
+                        onClick={() => setShowMobileMenu(false)}
                         className={`block px-3 py-1.5 rounded-md text-[13px] transition-colors ${
                           location.pathname === '/dashboard/apps' ? 'bg-[#1E1E1E] text-white font-semibold' : 'text-[#A1A1AA] hover:text-white hover:bg-[#1A1A1A]'
                         }`}>
                         App store
                       </Link>
                       <Link to="/dashboard/apps/installed"
+                        onClick={() => setShowMobileMenu(false)}
                         className={`block px-3 py-1.5 rounded-md text-[13px] transition-colors ${
                           location.pathname === '/dashboard/apps/installed' ? 'bg-[#1E1E1E] text-white font-semibold' : 'text-[#A1A1AA] hover:text-white hover:bg-[#1A1A1A]'
                         }`}>
@@ -221,6 +242,7 @@ export default function DashboardLayout({ children, title, subtitle, actions }) 
                     >
                       {INSIGHTS_SUB.map(sub => (
                         <Link key={sub.path} to={sub.path}
+                          onClick={() => setShowMobileMenu(false)}
                           className={`block px-3 py-1.5 rounded-md text-[13px] transition-colors ${
                             location.pathname === sub.path ? 'bg-[#1E1E1E] text-white font-semibold' : 'text-[#A1A1AA] hover:text-white hover:bg-[#1A1A1A]'
                           }`}>
@@ -247,7 +269,10 @@ export default function DashboardLayout({ children, title, subtitle, actions }) 
             View public page
           </a>
           <button
-            onClick={() => { navigator.clipboard.writeText(`${window.location.origin}/${user?.username}`); }}
+            onClick={() => { 
+              navigator.clipboard.writeText(`${window.location.origin}/${user?.username}`);
+              setShowMobileMenu(false);
+            }}
             className="w-full flex items-center gap-3 px-3 py-2 rounded-md text-[13px] text-[#A1A1AA] hover:bg-[#1E1E1E] hover:text-white transition-colors"
           >
             <Copy className="w-4 h-4" />
@@ -255,6 +280,7 @@ export default function DashboardLayout({ children, title, subtitle, actions }) 
           </button>
           <Link
             to="/dashboard/settings"
+            onClick={() => setShowMobileMenu(false)}
             className="flex items-center gap-3 px-3 py-2 rounded-md text-[13px] text-[#A1A1AA] hover:bg-[#1E1E1E] hover:text-white transition-colors"
           >
             <Settings className="w-4 h-4" />
@@ -313,21 +339,29 @@ export default function DashboardLayout({ children, title, subtitle, actions }) 
       </AnimatePresence>
 
       {/* ── Main Content ────────────────────────────────── */}
-      <main className="flex-1 ml-[220px] min-h-screen">
+      <main className="flex-1 md:ml-[220px] min-h-screen">
         {/* Page header */}
-        <div className="sticky top-0 z-10 border-b border-[#2B2B2B] bg-[#101010] px-8 py-5">
-          <div className="flex items-start justify-between">
-            <div>
-              <h1 className="text-[22px] font-bold text-white">{title}</h1>
-              {subtitle && <p className="text-[#71717A] text-sm mt-0.5">{subtitle}</p>}
+        <div className="sticky top-0 z-10 border-b border-[#2B2B2B] bg-[#101010] px-4 md:px-8 py-4 md:py-5">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <button 
+                onClick={() => setShowMobileMenu(true)}
+                className="p-1.5 rounded-md hover:bg-[#1E1E1E] md:hidden text-[#71717A] hover:text-white transition-colors"
+              >
+                <Grid className="w-5 h-5" />
+              </button>
+              <div>
+                <h1 className="text-[18px] md:text-[22px] font-bold text-white leading-tight">{title}</h1>
+                {subtitle && <p className="hidden sm:block text-[#71717A] text-sm mt-0.5">{subtitle}</p>}
+              </div>
             </div>
-            {actions && <div className="ml-4 flex items-center gap-2">{actions}</div>}
+            {actions && <div className="flex items-center gap-2">{actions}</div>}
           </div>
         </div>
 
         {/* Page body */}
         <motion.div
-          className="px-8 py-6"
+          className="px-4 md:px-8 py-6"
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.3, ease: 'easeOut' }}

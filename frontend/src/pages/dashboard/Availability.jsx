@@ -81,19 +81,19 @@ export default function Availability() {
       title="Availability"
       subtitle="Configure times when you are available for bookings."
       actions={
-        <div className="flex items-center gap-3">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
           <div className="flex rounded-lg border border-[#2B2B2B] overflow-hidden">
             {[{id:'my', label:'My availability'},{id:'team', label:'Team availability'}].map((t,i) => (
               <button key={t.id} onClick={() => setActiveTab(t.id)}
-                className={`px-4 py-1.5 text-[13px] font-medium transition-colors ${
+                className={`flex-1 px-4 py-1.5 text-[13px] font-medium transition-colors ${
                   activeTab === t.id ? 'bg-[#2B2B2B] text-white' : 'text-[#71717A] hover:text-white'
                 } ${i === 0 ? 'border-r border-[#2B2B2B]' : ''}`}>
-                {t.label}
+                <span className="whitespace-nowrap">{t.label}</span>
               </button>
             ))}
           </div>
           <button onClick={handleNew} disabled={creating}
-            className="flex items-center gap-1.5 h-9 px-4 bg-white text-[#111827] text-[13px] font-semibold rounded-lg hover:bg-[#f4f4f5] disabled:opacity-60 transition-colors">
+            className="flex items-center justify-center gap-1.5 h-9 px-4 bg-white text-[#111827] text-[13px] font-semibold rounded-lg hover:bg-[#f4f4f5] disabled:opacity-60 transition-colors">
             {creating ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Plus className="w-3.5 h-3.5" />}
             New
           </button>

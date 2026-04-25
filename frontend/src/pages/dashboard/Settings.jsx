@@ -863,13 +863,12 @@ export default function Settings() {
   const navigate = useNavigate();
   const [activePage, setActivePage] = useState('Overview');
   const [search, setSearch] = useState('');
+  const [showMobileNav, setShowMobileNav] = useState(false);
 
   const meta = PAGE_META[activePage] || { title: activePage, subtitle: '' };
 
-  return (
-    <div className="flex min-h-screen bg-[#101010]">
-      {/* ══ Sidebar ═══════════════════════════════════════════════ */}
-      <aside className="w-[220px] shrink-0 fixed inset-y-0 left-0 flex flex-col bg-[#101010] border-r border-[#2B2B2B] z-20 overflow-y-auto">
+  const SidebarContent = () => (
+    <>
         {/* Back */}
         <div className="px-4 py-4 border-b border-[#2B2B2B] shrink-0">
           <button onClick={() => navigate('/dashboard')}
@@ -880,7 +879,7 @@ export default function Settings() {
 
         <div className="flex-1 px-3 py-3 space-y-0.5 overflow-y-auto">
           {/* Overview */}
-          <button onClick={() => setActivePage('Overview')}
+          <button onClick={() => { setActivePage('Overview'); setShowMobileNav(false); }}
             className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-md text-[13.5px] font-medium transition-colors ${
               activePage === 'Overview' ? 'bg-[#2B2B2B] text-white' : 'text-[#A1A1AA] hover:bg-[#1E1E1E] hover:text-white'
             }`}>
@@ -900,7 +899,7 @@ export default function Settings() {
             </div>
             <div className="space-y-0.5 mt-0.5">
               {PERSONAL_NAV.map(label => (
-                <NavItem key={label} label={label} active={activePage === label} onClick={() => setActivePage(label)} />
+                <NavItem key={label} label={label} active={activePage === label} onClick={() => { setActivePage(label); setShowMobileNav(false); }} />
               ))}
             </div>
           </div>
@@ -912,7 +911,7 @@ export default function Settings() {
               <span className="text-[11px] font-bold text-[#52525B] uppercase tracking-wider">Security</span>
             </div>
             {['Password','Impersonation','Compliance'].map(label => (
-              <NavItem key={label} label={label} active={activePage === label} onClick={() => setActivePage(label)} />
+              <NavItem key={label} label={label} active={activePage === label} onClick={() => { setActivePage(label); setShowMobileNav(false); }} />
             ))}
           </div>
 
@@ -923,7 +922,7 @@ export default function Settings() {
               <span className="text-[11px] font-bold text-[#52525B] uppercase tracking-wider">Billing</span>
             </div>
             {['Manage billing','Plans'].map(label => (
-              <NavItem key={label} label={label} active={activePage === label} onClick={() => setActivePage(label)} />
+              <NavItem key={label} label={label} active={activePage === label} onClick={() => { setActivePage(label); setShowMobileNav(false); }} />
             ))}
           </div>
         </div>
@@ -935,34 +934,74 @@ export default function Settings() {
             <LogOut className="w-4 h-4" /> Logout
           </button>
         </div>
+    </>
+  );
+
+  return (
+    <div className="flex min-h-screen bg-[#101010]">
+      {/* ══ Sidebar (Desktop) ═══════════════════════════════════════════════ */}
+      <aside className="hidden lg:flex w-[220px] shrink-0 fixed inset-y-0 left-0 flex-col bg-[#101010] border-r border-[#2B2B2B] z-20 overflow-y-auto">
+        <SidebarContent />
       </aside>
 
+      {/* ══ Sidebar (Mobile Drawer) ═════════════════════════════════════════ */}
+      <AnimatePresence>
+        {showMobileNav && (
+          <>
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setShowMobileNav(false)}
+              className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] lg:hidden"
+            />
+            <motion.aside 
+              initial={{ x: '-100%' }}
+              animate={{ x: 0 }}
+              exit={{ x: '-100%' }}
+              transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+              className="fixed inset-y-0 left-0 w-[260px] bg-[#101010] border-r border-[#2B2B2B] z-[101] flex flex-col lg:hidden"
+            >
+              <SidebarContent />
+            </motion.aside>
+          </>
+        )}
+      </AnimatePresence>
+
       {/* ══ Main ═══════════════════════════════════════════════════ */}
-      <main className="flex-1 ml-[220px] min-h-screen">
+      <main className="flex-1 lg:ml-[220px] min-h-screen">
         {/* Header */}
-        <div className="sticky top-0 z-10 bg-[#101010] border-b border-[#2B2B2B] px-8 py-5 flex items-center justify-between">
-          <div>
-            <h1 className="text-[20px] font-bold text-white">{meta.title}</h1>
-            {meta.subtitle && <p className="text-[13px] text-[#71717A] mt-0.5">{meta.subtitle}</p>}
+        <div className="sticky top-0 z-10 bg-[#101010]/80 backdrop-blur-md border-b border-[#2B2B2B] px-4 sm:px-8 py-5 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <button 
+              onClick={() => setShowMobileNav(true)}
+              className="lg:hidden p-2 -ml-2 rounded-md text-[#A1A1AA] hover:text-white hover:bg-[#1A1A1A]"
+            >
+              <SlidersHorizontal className="w-5 h-5" />
+            </button>
+            <div>
+              <h1 className="text-[18px] sm:text-[20px] font-bold text-white">{meta.title}</h1>
+              {meta.subtitle && <p className="text-[12px] sm:text-[13px] text-[#71717A] mt-0.5 line-clamp-1">{meta.subtitle}</p>}
+            </div>
           </div>
           <div className="flex items-center gap-3">
             {activePage === 'Calendars' && (
-              <button className="flex items-center gap-1.5 h-9 px-4 border border-[#3F3F46] rounded-lg text-[13px] font-semibold text-white hover:bg-[#1A1A1A]">
-                <Plus className="w-3.5 h-3.5" /> Add calendar
+              <button className="flex items-center gap-1.5 h-9 px-3 sm:px-4 border border-[#3F3F46] rounded-lg text-[13px] font-semibold text-white hover:bg-[#1A1A1A]">
+                <Plus className="w-3.5 h-3.5" /> <span className="hidden sm:inline">Add calendar</span><span className="sm:hidden">Add</span>
               </button>
             )}
             {activePage === 'Conferencing' && (
-              <button className="flex items-center gap-1.5 h-9 px-4 border border-[#3F3F46] rounded-lg text-[13px] font-semibold text-white hover:bg-[#1A1A1A]">
+              <button className="flex items-center gap-1.5 h-9 px-3 sm:px-4 border border-[#3F3F46] rounded-lg text-[13px] font-semibold text-white hover:bg-[#1A1A1A]">
                 <Plus className="w-3.5 h-3.5" /> Add
               </button>
             )}
             {activePage === 'Out of office' && (
-              <button className="flex items-center gap-1.5 h-9 px-4 border border-[#3F3F46] rounded-lg text-[13px] font-semibold text-white hover:bg-[#1A1A1A]">
+              <button className="flex items-center gap-1.5 h-9 px-3 sm:px-4 border border-[#3F3F46] rounded-lg text-[13px] font-semibold text-white hover:bg-[#1A1A1A]">
                 <Plus className="w-3.5 h-3.5" /> Add
               </button>
             )}
             {activePage === 'Overview' && (
-              <div className="flex items-center gap-2 px-3 py-1.5 bg-[#1A1A1A] border border-[#2B2B2B] rounded-lg w-52">
+              <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-[#1A1A1A] border border-[#2B2B2B] rounded-lg w-52">
                 <Search className="w-3.5 h-3.5 text-[#52525B] shrink-0" />
                 <input type="text" placeholder="Search" value={search}
                   onChange={e => setSearch(e.target.value)}
@@ -973,10 +1012,10 @@ export default function Settings() {
         </div>
 
         {/* Body */}
-        <div className="px-8 py-8">
+        <div className="px-4 sm:px-8 py-8">
           {activePage === 'Overview'
             ? <OverviewPage onSelect={setActivePage} />
-            : <SubPage page={activePage} user={user} />
+            : <SubPage page={activePage} user={user} onSelect={setActivePage} />
           }
         </div>
       </main>

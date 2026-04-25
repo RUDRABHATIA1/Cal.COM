@@ -32,7 +32,7 @@ export default function Footer() {
           background: '#F3F4F6', borderRadius: 24,
           padding: '56px 56px 40px',
         }}>
-          <div style={{ display: 'grid', gridTemplateColumns: '240px 1fr 1fr 1fr 1fr', gap: 32, marginBottom: 48 }}>
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-8 md:gap-12 mb-12">
 
             {/* Brand col */}
             <div>

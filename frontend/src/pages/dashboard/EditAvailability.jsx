@@ -55,6 +55,8 @@ function TimeSelect({ value, onChange }) {
   );
 }
 
+import { AnimatePresence, motion } from 'framer-motion';
+
 export default function EditAvailability() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -66,6 +68,7 @@ export default function EditAvailability() {
   const [saved, setSaved]             = useState(false);
   const [editingName, setEditingName] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
+  const [showMobileNav, setShowMobileNav] = useState(false);
 
   useEffect(() => {
     api.get(`/availability/${id}`)
@@ -119,6 +122,62 @@ export default function EditAvailability() {
     }
   };
 
+  const SidebarContent = () => (
+    <>
+        <div className="px-3 py-3 border-b border-[#2B2B2B]">
+          <button onClick={() => setShowUserMenu(v => !v)}
+            className="w-full flex items-center gap-2.5 px-2 py-1.5 rounded-md hover:bg-[#1E1E1E] transition-colors">
+            <div className="w-7 h-7 rounded-full bg-gradient-to-br from-sky-400 to-blue-600 flex items-center justify-center text-white text-[11px] font-bold uppercase shrink-0">
+              {user?.name?.charAt(0) || 'U'}
+            </div>
+            <span className="flex-1 text-left text-[13px] font-semibold text-white truncate">{user?.name || 'User'}</span>
+            <ChevronDown className="w-3.5 h-3.5 text-[#71717A] shrink-0" />
+          </button>
+          {showUserMenu && (
+            <div className="mt-1 mx-1 border border-[#2B2B2B] rounded-lg bg-[#1A1A1A] overflow-hidden shadow-xl">
+              <button onClick={() => { logout(); navigate('/'); }}
+                className="w-full flex items-center gap-2 px-3 py-2 text-[13px] text-[#A1A1AA] hover:bg-[#2B2B2B] hover:text-white">
+                <LogOut className="w-4 h-4" />Logout
+              </button>
+            </div>
+          )}
+        </div>
+        <div className="px-3 py-2 border-b border-[#2B2B2B]">
+          <div className="flex items-center gap-2 px-2 py-1.5 bg-[#1A1A1A] border border-[#2B2B2B] rounded-md">
+            <Search className="w-3.5 h-3.5 text-[#52525B]" />
+            <span className="text-[13px] text-[#52525B]">Search</span>
+          </div>
+        </div>
+        <nav className="flex-1 px-3 py-3 space-y-0.5 overflow-y-auto">
+          {NAV.map(item => (
+            <button key={item.path} onClick={() => { navigate(item.path); setShowMobileNav(false); }}
+              className={`w-full flex items-center gap-3 px-3 py-2 rounded-md text-[13.5px] font-medium transition-colors ${
+                item.path === '/dashboard/availability'
+                  ? 'bg-[#2B2B2B] text-white'
+                  : 'text-[#A1A1AA] hover:bg-[#1E1E1E] hover:text-white'
+              }`}>
+              <item.icon className="w-4 h-4 shrink-0" />
+              <span>{item.label}</span>
+            </button>
+          ))}
+        </nav>
+        <div className="px-3 py-3 border-t border-[#2B2B2B] space-y-0.5">
+          <button onClick={() => window.open(`/${user?.username}`, '_blank')}
+            className="w-full flex items-center gap-3 px-3 py-2 rounded-md text-[13px] text-[#A1A1AA] hover:bg-[#1E1E1E] hover:text-white">
+            <ExternalLink className="w-4 h-4" />View public page
+          </button>
+          <button onClick={() => navigator.clipboard.writeText(`${window.location.origin}/${user?.username}`)}
+            className="w-full flex items-center gap-3 px-3 py-2 rounded-md text-[13px] text-[#A1A1AA] hover:bg-[#1E1E1E] hover:text-white">
+            <Copy className="w-4 h-4" />Copy public page link
+          </button>
+          <button onClick={() => navigate('/dashboard/settings')}
+            className="w-full flex items-center gap-3 px-3 py-2 rounded-md text-[13px] text-[#A1A1AA] hover:bg-[#1E1E1E] hover:text-white">
+            <Settings className="w-4 h-4" />Settings
+          </button>
+        </div>
+    </>
+  );
+
   if (loading) return (
     <div className="min-h-screen bg-[#101010] flex items-center justify-center">
       <Loader2 className="w-7 h-7 animate-spin text-[#52525B]" />
@@ -149,130 +208,105 @@ export default function EditAvailability() {
   return (
     <div className="flex min-h-screen bg-[#101010]">
 
-      {/* ══ SIDEBAR ════════════════════════════════════════════════════ */}
-      <aside className="w-[220px] shrink-0 fixed inset-y-0 left-0 flex flex-col bg-[#101010] border-r border-[#2B2B2B] z-20">
-        <div className="px-3 py-3 border-b border-[#2B2B2B]">
-          <button onClick={() => setShowUserMenu(v => !v)}
-            className="w-full flex items-center gap-2.5 px-2 py-1.5 rounded-md hover:bg-[#1E1E1E] transition-colors">
-            <div className="w-7 h-7 rounded-full bg-gradient-to-br from-sky-400 to-blue-600 flex items-center justify-center text-white text-[11px] font-bold uppercase shrink-0">
-              {user?.name?.charAt(0) || 'U'}
-            </div>
-            <span className="flex-1 text-left text-[13px] font-semibold text-white truncate">{user?.name || 'User'}</span>
-            <ChevronDown className="w-3.5 h-3.5 text-[#71717A] shrink-0" />
-          </button>
-          {showUserMenu && (
-            <div className="mt-1 mx-1 border border-[#2B2B2B] rounded-lg bg-[#1A1A1A] overflow-hidden shadow-xl">
-              <button onClick={() => { logout(); navigate('/'); }}
-                className="w-full flex items-center gap-2 px-3 py-2 text-[13px] text-[#A1A1AA] hover:bg-[#2B2B2B] hover:text-white">
-                <LogOut className="w-4 h-4" />Logout
-              </button>
-            </div>
-          )}
-        </div>
-        <div className="px-3 py-2 border-b border-[#2B2B2B]">
-          <div className="flex items-center gap-2 px-2 py-1.5 bg-[#1A1A1A] border border-[#2B2B2B] rounded-md">
-            <Search className="w-3.5 h-3.5 text-[#52525B]" />
-            <span className="text-[13px] text-[#52525B]">Search</span>
-          </div>
-        </div>
-        <nav className="flex-1 px-3 py-3 space-y-0.5 overflow-y-auto">
-          {NAV.map(item => (
-            <button key={item.path} onClick={() => navigate(item.path)}
-              className={`w-full flex items-center gap-3 px-3 py-2 rounded-md text-[13.5px] font-medium transition-colors ${
-                item.path === '/dashboard/availability'
-                  ? 'bg-[#2B2B2B] text-white'
-                  : 'text-[#A1A1AA] hover:bg-[#1E1E1E] hover:text-white'
-              }`}>
-              <item.icon className="w-4 h-4 shrink-0" />
-              <span>{item.label}</span>
-            </button>
-          ))}
-        </nav>
-        <div className="px-3 py-3 border-t border-[#2B2B2B] space-y-0.5">
-          <button onClick={() => window.open(`/${user?.username}`, '_blank')}
-            className="w-full flex items-center gap-3 px-3 py-2 rounded-md text-[13px] text-[#A1A1AA] hover:bg-[#1E1E1E] hover:text-white">
-            <ExternalLink className="w-4 h-4" />View public page
-          </button>
-          <button onClick={() => navigator.clipboard.writeText(`${window.location.origin}/${user?.username}`)}
-            className="w-full flex items-center gap-3 px-3 py-2 rounded-md text-[13px] text-[#A1A1AA] hover:bg-[#1E1E1E] hover:text-white">
-            <Copy className="w-4 h-4" />Copy public page link
-          </button>
-          <button onClick={() => navigate('/dashboard/settings')}
-            className="w-full flex items-center gap-3 px-3 py-2 rounded-md text-[13px] text-[#A1A1AA] hover:bg-[#1E1E1E] hover:text-white">
-            <Settings className="w-4 h-4" />Settings
-          </button>
-        </div>
+      {/* ══ SIDEBAR (Desktop) ═════════════════════════════════════════════ */}
+      <aside className="hidden lg:flex w-[220px] shrink-0 fixed inset-y-0 left-0 flex flex-col bg-[#101010] border-r border-[#2B2B2B] z-20">
+        <SidebarContent />
       </aside>
 
+      {/* ══ SIDEBAR (Mobile Drawer) ═══════════════════════════════════════ */}
+      <AnimatePresence>
+        {showMobileNav && (
+          <>
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setShowMobileNav(false)}
+              className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] lg:hidden"
+            />
+            <motion.aside 
+              initial={{ x: '-100%' }}
+              animate={{ x: 0 }}
+              exit={{ x: '-100%' }}
+              transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+              className="fixed inset-y-0 left-0 w-[260px] bg-[#101010] border-r border-[#2B2B2B] z-[101] flex flex-col lg:hidden"
+            >
+              <SidebarContent />
+            </motion.aside>
+          </>
+        )}
+      </AnimatePresence>
+
       {/* ══ MAIN CONTENT ═══════════════════════════════════════════════ */}
-      <div className="flex-1 ml-[220px] flex flex-col min-h-screen">
+      <div className="flex-1 lg:ml-[220px] flex flex-col min-h-screen">
 
         {/* Header */}
-        <header className="sticky top-0 z-10 bg-[#101010] border-b border-[#2B2B2B] px-6 h-14 flex items-center gap-3">
+        <header className="sticky top-0 z-10 bg-[#101010]/80 backdrop-blur-md border-b border-[#2B2B2B] px-4 sm:px-6 h-14 flex items-center gap-3">
+          <button 
+            onClick={() => setShowMobileNav(true)}
+            className="lg:hidden p-2 -ml-2 rounded-md text-[#71717A] hover:bg-[#1E1E1E] hover:text-white"
+          >
+            <Clock className="w-5 h-5" />
+          </button>
+          
           <button onClick={() => navigate('/dashboard/availability')}
-            className="p-1.5 rounded-md text-[#71717A] hover:bg-[#1E1E1E] hover:text-white transition-colors">
+            className="hidden sm:block p-1.5 rounded-md text-[#71717A] hover:bg-[#1E1E1E] hover:text-white transition-colors">
             <ArrowLeft className="w-5 h-5" />
           </button>
 
-          <div className="flex-1">
+          <div className="flex-1 min-w-0">
             {editingName ? (
               <input autoFocus value={schedule.name}
                 onChange={e => setSchedule(p => ({ ...p, name: e.target.value }))}
                 onBlur={() => setEditingName(false)}
                 onKeyDown={e => e.key === 'Enter' && setEditingName(false)}
-                className="bg-transparent text-[18px] font-bold text-white focus:outline-none border-b border-[#3F3F46] pb-0.5"
+                className="bg-transparent text-[16px] sm:text-[18px] font-bold text-white focus:outline-none border-b border-[#3F3F46] pb-0.5 w-full"
               />
             ) : (
               <div className="flex items-center gap-2">
-                <h1 className="text-[18px] font-bold text-white">{schedule.name}</h1>
+                <h1 className="text-[16px] sm:text-[18px] font-bold text-white truncate">{schedule.name}</h1>
                 <button onClick={() => setEditingName(true)}
-                  className="text-[#52525B] hover:text-white transition-colors">
-                  <Pencil className="w-4 h-4" />
+                  className="text-[#52525B] hover:text-white transition-colors shrink-0">
+                  <Pencil className="w-3.5 h-3.5" />
                 </button>
               </div>
             )}
-            <p className="text-[12px] text-[#71717A] leading-none mt-0.5">{summaryDays}</p>
+            <p className="text-[11px] sm:text-[12px] text-[#71717A] leading-none mt-0.5 truncate">{summaryDays}</p>
           </div>
 
           {/* Right controls */}
           <div className="flex items-center gap-2">
-            <span className="text-[13px] text-[#71717A]">Set as default</span>
-            <Toggle on={schedule.isDefault} onChange={v => setSchedule(p => ({ ...p, isDefault: v }))} />
-            <div className="h-5 w-[1px] bg-[#2B2B2B] mx-1" />
-            <button onClick={handleDelete}
-              className="p-2 rounded-md text-[#71717A] hover:bg-[#1E1E1E] hover:text-red-400 transition-colors">
-              <Trash2 className="w-4 h-4" />
-            </button>
-            <div className="h-5 w-[1px] bg-[#2B2B2B] mx-1" />
             <button onClick={handleSave} disabled={saving}
-              className={`h-9 px-5 rounded-lg text-[13px] font-semibold flex items-center gap-2 transition-all ${
+              className={`h-8 sm:h-9 px-3 sm:px-5 rounded-lg text-[12px] sm:text-[13px] font-semibold flex items-center gap-2 transition-all ${
                 saved ? 'bg-emerald-600 text-white' : 'bg-white text-[#111827] hover:bg-[#f4f4f5]'
               } disabled:opacity-60`}>
               {saving && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
               {saved ? '✓ Saved' : saving ? 'Saving…' : 'Save'}
             </button>
+            <button onClick={handleDelete}
+              className="hidden sm:flex p-2 rounded-md text-[#71717A] hover:bg-[#1E1E1E] hover:text-red-400 transition-colors">
+              <Trash2 className="w-4 h-4" />
+            </button>
           </div>
         </header>
 
         {/* Body */}
-        <div className="flex flex-1 gap-6 px-8 py-8 max-w-5xl">
+        <div className="flex flex-1 flex-col xl:flex-row gap-6 px-4 sm:px-8 py-8 max-w-7xl mx-auto w-full">
 
           {/* Days column */}
-          <div className="flex-1 space-y-6">
-            {/* Day rows */}
-            <div className="space-y-3">
+          <div className="flex-1 space-y-8">
+            <div className="space-y-4">
               {schedule.days.map((day, i) => (
-                <div key={day.day} className="flex items-center gap-4 min-h-[44px]">
-                  {/* Toggle */}
-                  <Toggle on={day.enabled} onChange={v => setDay(i, 'enabled', v)} />
-
-                  {/* Day name */}
-                  <span className={`w-28 text-[14px] font-semibold ${day.enabled ? 'text-white' : 'text-[#52525B]'}`}>
-                    {day.day}
-                  </span>
+                <div key={day.day} className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 pb-4 sm:pb-0 border-b border-[#2B2B2B]/50 sm:border-none">
+                  <div className="flex items-center gap-4 min-w-[160px]">
+                    <Toggle on={day.enabled} onChange={v => setDay(i, 'enabled', v)} />
+                    <span className={`text-[14px] font-semibold ${day.enabled ? 'text-white' : 'text-[#52525B]'}`}>
+                      {day.day}
+                    </span>
+                  </div>
 
                   {day.enabled ? (
-                    <>
+                    <div className="flex items-center gap-2 sm:gap-4 pl-12 sm:pl-0">
                       <TimeSelect value={day.startTime} onChange={v => setDay(i, 'startTime', v)} />
                       <span className="text-[#52525B] font-bold">-</span>
                       <TimeSelect value={day.endTime} onChange={v => setDay(i, 'endTime', v)} />
@@ -282,32 +316,30 @@ export default function EditAvailability() {
                         title="Copy times to all days">
                         <Copy className="w-4 h-4" />
                       </button>
-                    </>
+                    </div>
                   ) : (
-                    <span className="text-[13px] text-[#52525B] ml-1">Unavailable</span>
+                    <span className="text-[13px] text-[#52525B] pl-12 sm:pl-0">Unavailable</span>
                   )}
                 </div>
               ))}
             </div>
 
-            {/* Divider */}
             <div className="border-t border-[#2B2B2B]" />
 
             {/* Date overrides */}
-            <div>
-              <div className="flex items-center gap-2 mb-1">
+            <div className="space-y-4">
+              <div>
                 <h3 className="text-[15px] font-bold text-white">Date overrides</h3>
+                <p className="text-[13px] text-[#71717A]">
+                  Add dates when your availability changes.
+                </p>
               </div>
-              <p className="text-[13px] text-[#71717A] mb-4">
-                Add dates when your availability changes from your daily hours.
-              </p>
 
-              {/* Existing overrides */}
               {schedule.overrides?.length > 0 && (
-                <div className="space-y-2 mb-4">
+                <div className="space-y-2">
                   {schedule.overrides.map((ov, idx) => (
-                    <div key={idx} className="flex items-center gap-4 px-4 py-3 bg-[#141414] border border-[#2B2B2B] rounded-lg">
-                      <span className="text-[13px] text-white font-medium w-28">{ov.date}</span>
+                    <div key={idx} className="flex flex-col sm:flex-row sm:items-center gap-3 px-4 py-3 bg-[#141414] border border-[#2B2B2B] rounded-lg">
+                      <span className="text-[13px] text-white font-medium sm:w-28">{ov.date}</span>
                       {ov.isOff ? (
                         <span className="text-[13px] text-[#52525B]">Unavailable</span>
                       ) : (
@@ -315,8 +347,8 @@ export default function EditAvailability() {
                       )}
                       <button onClick={() => setSchedule(p => ({
                         ...p, overrides: p.overrides.filter((_,j) => j !== idx)
-                      }))} className="ml-auto text-[#52525B] hover:text-red-400 transition-colors">
-                        ✕
+                      }))} className="sm:ml-auto text-[#52525B] hover:text-red-400 transition-colors w-fit">
+                        Remove
                       </button>
                     </div>
                   ))}
@@ -326,16 +358,15 @@ export default function EditAvailability() {
               <button onClick={() => setSchedule(p => ({
                 ...p,
                 overrides: [...(p.overrides || []), { date: new Date().toISOString().split('T')[0], startTime: '09:00', endTime: '17:00', isOff: false }]
-              }))} className="flex items-center gap-2 px-4 py-2 border border-[#2B2B2B] rounded-lg text-[13px] text-[#A1A1AA] hover:border-[#3F3F46] hover:text-white transition-colors">
+              }))} className="flex items-center gap-2 px-4 py-2.5 border border-[#2B2B2B] rounded-lg text-[13px] text-[#A1A1AA] hover:border-[#3F3F46] hover:text-white transition-colors w-full sm:w-auto justify-center">
                 <Plus className="w-4 h-4" /> Add an override
               </button>
             </div>
           </div>
 
           {/* Right sidebar */}
-          <div className="w-[280px] shrink-0 space-y-4">
-            {/* Timezone */}
-            <div className="bg-[#141414] border border-[#2B2B2B] rounded-xl p-4">
+          <div className="w-full xl:w-[280px] shrink-0 space-y-4">
+            <div className="bg-[#141414] border border-[#2B2B2B] rounded-xl p-5">
               <label className="block text-[13px] font-bold text-white mb-3">Timezone</label>
               <div className="relative">
                 <select value={schedule.timezone} onChange={e => setSchedule(p => ({ ...p, timezone: e.target.value }))}
@@ -346,13 +377,21 @@ export default function EditAvailability() {
               </div>
             </div>
 
-            {/* Troubleshooter */}
-            <div className="bg-[#141414] border border-[#2B2B2B] rounded-xl p-4 space-y-3">
+            <div className="bg-[#141414] border border-[#2B2B2B] rounded-xl p-5 flex items-center justify-between">
+              <span className="text-[13px] font-bold text-white">Default schedule</span>
+              <Toggle on={schedule.isDefault} onChange={v => setSchedule(p => ({ ...p, isDefault: v }))} />
+            </div>
+
+            <div className="bg-[#141414] border border-[#2B2B2B] rounded-xl p-5 space-y-3">
               <p className="text-[13px] font-semibold text-white">Something doesn't look right?</p>
-              <button className="px-4 py-2 border border-[#3F3F46] rounded-lg text-[13px] text-[#A1A1AA] hover:border-[#71717A] hover:text-white transition-colors">
+              <button className="w-full py-2 border border-[#3F3F46] rounded-lg text-[13px] text-[#A1A1AA] hover:border-[#71717A] hover:text-white transition-colors">
                 Launch troubleshooter
               </button>
             </div>
+            
+            <button onClick={handleDelete} className="sm:hidden w-full py-3 border border-red-900/30 text-red-400 rounded-xl text-sm font-semibold hover:bg-red-950/20 transition-colors">
+              Delete Schedule
+            </button>
           </div>
         </div>
       </div>

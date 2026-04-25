@@ -30,7 +30,7 @@ const EventTypeRow = ({ event, onDelete, onEdit, onCopy, onToggle, onMoveUp, onM
     >
       {/* Left: Reorder arrows (Box-like structure) */}
       <div 
-        className="flex flex-col gap-1 mr-4 opacity-0 group-hover:opacity-100 transition-opacity"
+        className="hidden sm:flex flex-col gap-1 mr-4 opacity-0 group-hover:opacity-100 transition-opacity"
         onClick={(e) => e.stopPropagation()}
       >
         <button

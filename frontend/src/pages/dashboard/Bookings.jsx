@@ -143,7 +143,7 @@ function BookingCard({ booking, index, username, onCancelClick }) {
       className={`flex items-start gap-4 px-6 py-5 border-b border-[#2B2B2B] last:border-0 hover:bg-[#1A1A1A] transition-colors group ${isCancelled ? 'opacity-60' : ''}`}
     >
       {/* Status / Avatar circle */}
-      <div className={`w-10 h-10 rounded-full flex items-center justify-center text-white text-[13px] font-bold shrink-0 mt-0.5 ${
+      <div className={`w-10 h-10 rounded-full items-center justify-center text-white text-[13px] font-bold shrink-0 mt-0.5 hidden sm:flex ${
         isCancelled
           ? 'bg-gradient-to-br from-red-500/40 to-red-700/40'
           : 'bg-gradient-to-br from-sky-500 to-blue-600'
@@ -184,12 +184,12 @@ function BookingCard({ booking, index, username, onCancelClick }) {
 
       {/* Actions */}
       {!isCancelled && (
-        <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
+        <div className="flex items-center gap-2 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity shrink-0">
           <a
             href={rescheduleUrl}
             target="_blank"
             rel="noreferrer"
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12.5px] font-semibold bg-[#2B2B2B] text-[#A1A1AA] hover:text-white hover:bg-[#3F3F46] transition-all"
+            className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12.5px] font-semibold bg-[#2B2B2B] text-[#A1A1AA] hover:text-white hover:bg-[#3F3F46] transition-all"
           >
             <Calendar className="w-3.5 h-3.5" />
             Reschedule

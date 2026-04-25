@@ -1098,7 +1098,7 @@ export default function Features() {
               <CTAButtons />
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 24 }}>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 lg:gap-10 mb-12">
               <BenefitCard
                 title="Avoid meeting overload"
                 desc="Only get booked when you want to. Set daily, weekly or monthly limits and add buffers around your events."
@@ -1138,7 +1138,7 @@ export default function Features() {
                 …and so much more!
               </h2>
             </div>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16 }}>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6 lg:gap-8">
               <FeatureIconCard icon={CardIcon} label="Accept payments" desc="You can monetize your bookings through our Stripe integration." />
               <FeatureIconCard icon={CameraIcon} label="Built-in video conferencing" desc="Cal Video is our in-house video conferencing platform." />
               <FeatureIconCard icon={LinkIcon} label="Short booking links" desc="Each booking link can be short which makes it easy to remember." />
@@ -1341,10 +1341,7 @@ export default function Features() {
                   <CTAButtons />
                </div>
 
-               <div style={{ 
-                 columnCount: 3, columnGap: 16, maxWidth: 1200, margin: '0 auto', textAlign: 'left',
-                 padding: '0 20px'
-               }}>
+               <div className="columns-1 md:columns-2 lg:columns-3 gap-4 max-w-7xl mx-auto text-left px-6">
                  {WALL_OF_LOVE_DATA.map((t, i) => (
                    <WallOfLoveCard key={i} {...t} />
                  ))}

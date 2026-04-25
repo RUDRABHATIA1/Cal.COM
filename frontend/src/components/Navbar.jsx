@@ -100,6 +100,7 @@ const DROPDOWN_CONTENT = {
 export default function Navbar() {
   const [scrolled, setScrolled] = useState(false);
   const [activeDropdown, setActiveDropdown] = useState(null);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { user, logout } = useAuth();
 
   useEffect(() => {
@@ -109,28 +110,28 @@ export default function Navbar() {
   }, []);
 
   return (
-    <div className="fixed top-0 left-0 right-0 z-[1000] flex justify-center p-6 pointer-events-none">
+    <div className="fixed top-0 left-0 right-0 z-[1000] flex justify-center p-4 md:p-6 pointer-events-none">
       <div className="relative max-w-5xl w-full pointer-events-auto">
         <motion.nav 
           initial={{ y: -20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ duration: 0.8, ease: [0.19, 1, 0.22, 1] }}
           className={`
-            flex items-center gap-2 px-6 py-2.5 rounded-full border bg-white/80 backdrop-blur-xl transition-all duration-500
+            flex items-center gap-2 px-4 md:px-6 py-2.5 rounded-full border bg-white/80 backdrop-blur-xl transition-all duration-500
             ${scrolled ? 'shadow-[0_24px_48px_-12px_rgba(0,0,0,0.1)] border-gray-100' : 'shadow-sm border-transparent'}
           `}
           onMouseLeave={() => setActiveDropdown(null)}
         >
           {/* Logo */}
-          <Link to="/" className="flex items-center gap-2.5 mr-6 group">
+          <Link to="/" className="flex items-center gap-2.5 mr-2 md:mr-6 group">
             <div className="w-8 h-8 rounded-lg bg-black flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
               <span className="text-white font-black text-lg -rotate-12">C</span>
             </div>
-            <span className="text-[17px] font-black tracking-[-0.03em] text-black">cal.com</span>
+            <span className="text-[15px] md:text-[17px] font-black tracking-[-0.03em] text-black">cal.com</span>
           </Link>
 
-          {/* Links */}
-          <div className="hidden md:flex items-center gap-0.5">
+          {/* Links - Desktop */}
+          <div className="hidden lg:flex items-center gap-0.5">
             {NAV_ITEMS.map((item) => (
               <div 
                 key={item.label}
@@ -145,7 +146,7 @@ export default function Navbar() {
                   {item.hasArrow && <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-300 ${activeDropdown === item.dropdown ? 'rotate-180' : ''}`} />}
                 </button>
 
-                {/* Local Dropdown (Anchored to Link) */}
+                {/* Local Dropdown */}
                 <AnimatePresence>
                   {activeDropdown === item.dropdown && item.dropdown === 'developer' && (
                     <motion.div
@@ -177,30 +178,70 @@ export default function Navbar() {
           <div className="flex-1" />
 
           {/* Auth */}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1 md:gap-2">
             {user ? (
               <>
-                <Link to="/dashboard" className="px-5 py-2 text-[14px] font-bold text-gray-500 hover:text-black hover:bg-gray-50 rounded-full transition-all">
+                <Link to="/dashboard" className="px-3 md:px-5 py-2 text-[13px] md:text-[14px] font-bold text-gray-500 hover:text-black hover:bg-gray-50 rounded-full transition-all">
                   Dashboard
                 </Link>
-                <button onClick={logout} className="px-5 py-2 text-[14px] font-bold text-red-500 hover:bg-red-50 rounded-full transition-all">
+                <button onClick={logout} className="hidden sm:block px-5 py-2 text-[14px] font-bold text-red-500 hover:bg-red-50 rounded-full transition-all">
                   Sign out
                 </button>
               </>
             ) : (
               <>
-                <Link to="/login" className="px-5 py-2 text-[14px] font-bold text-gray-500 hover:text-black hover:bg-gray-50 rounded-full transition-all">
+                <Link to="/login" className="px-3 md:px-5 py-2 text-[13px] md:text-[14px] font-bold text-gray-500 hover:text-black hover:bg-gray-50 rounded-full transition-all">
                   Sign in
                 </Link>
-                <Link to="/signup" className="px-5 py-2 text-[14px] font-bold text-white bg-black rounded-full hover:bg-gray-800 transition-all shadow-md shadow-black/5 hover:shadow-black/10">
+                <Link to="/signup" className="px-4 md:px-5 py-2 text-[13px] md:text-[14px] font-bold text-white bg-black rounded-full hover:bg-gray-800 transition-all shadow-md shadow-black/5 hover:shadow-black/10">
                   Get started
                 </Link>
               </>
             )}
+
+            {/* Mobile Menu Toggle */}
+            <button 
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="lg:hidden p-2 rounded-full hover:bg-gray-100 transition-colors ml-1"
+            >
+              <div className="w-5 h-5 flex flex-col justify-center gap-1">
+                <motion.span animate={{ rotate: mobileMenuOpen ? 45 : 0, y: mobileMenuOpen ? 2.5 : 0 }} className="w-full h-0.5 bg-black rounded-full block" />
+                <motion.span animate={{ opacity: mobileMenuOpen ? 0 : 1 }} className="w-full h-0.5 bg-black rounded-full block" />
+                <motion.span animate={{ rotate: mobileMenuOpen ? -45 : 0, y: mobileMenuOpen ? -2.5 : 0 }} className="w-full h-0.5 bg-black rounded-full block" />
+              </div>
+            </button>
           </div>
         </motion.nav>
 
-        {/* Megamenu */}
+        {/* Mobile Menu Dropdown */}
+        <AnimatePresence>
+          {mobileMenuOpen && (
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              className="absolute top-full left-0 right-0 mt-4 mx-4 bg-white rounded-[24px] shadow-2xl border border-gray-100 p-6 lg:hidden"
+            >
+              <div className="space-y-4">
+                {NAV_ITEMS.map((item) => (
+                  <div key={item.label} className="border-b border-gray-50 last:border-0 pb-2">
+                    <button className="flex items-center justify-between w-full text-left py-2 text-[16px] font-bold text-gray-800">
+                      {item.label}
+                      {item.hasArrow && <ChevronDown className="w-4 h-4 text-gray-400" />}
+                    </button>
+                  </div>
+                ))}
+                {user && (
+                  <button onClick={logout} className="w-full py-3 text-red-500 font-bold text-center border-t border-gray-100 mt-4">
+                    Sign out
+                  </button>
+                )}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Megamenu - Desktop */}
         <AnimatePresence>
           {(activeDropdown === 'solutions' || activeDropdown === 'resources') && (
             <motion.div
@@ -210,7 +251,7 @@ export default function Navbar() {
               transition={{ duration: 0.4, ease: [0.19, 1, 0.22, 1] }}
               onMouseEnter={() => setActiveDropdown(activeDropdown)}
               onMouseLeave={() => setActiveDropdown(null)}
-              className="absolute top-full mt-4 left-0 right-0 bg-white rounded-[32px] shadow-[0_32px_96px_-16px_rgba(0,0,0,0.12)] border border-gray-100 p-10 overflow-hidden"
+              className="hidden lg:block absolute top-full mt-4 left-0 right-0 bg-white rounded-[32px] shadow-[0_32px_96px_-16px_rgba(0,0,0,0.12)] border border-gray-100 p-10 overflow-hidden"
             >
               <div className="grid grid-cols-3 gap-12">
                 {/* Regular Sections */}

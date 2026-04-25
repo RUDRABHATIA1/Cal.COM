@@ -141,7 +141,7 @@ export default function Hero() {
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 0.2 }}
-              className="text-6xl md:text-7xl xl:text-8xl font-black text-black leading-[0.9] tracking-[-0.05em] mb-8"
+              className="text-5xl sm:text-6xl md:text-7xl xl:text-8xl font-black text-black leading-[0.9] tracking-[-0.05em] mb-8"
             >
               Scheduling <br />
               <span className="text-gray-300">infrastructure</span> <br />
@@ -152,7 +152,7 @@ export default function Hero() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 0.4 }}
-              className="text-xl text-gray-500 font-medium leading-relaxed mb-12 max-w-xl mx-auto lg:mx-0"
+              className="text-lg md:text-xl text-gray-500 font-medium leading-relaxed mb-12 max-w-xl mx-auto lg:mx-0"
             >
               The open-source scheduling infrastructure that gives you full control over your calendar and bookings.
             </motion.p>
