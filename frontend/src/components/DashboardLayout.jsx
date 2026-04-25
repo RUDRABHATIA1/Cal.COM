@@ -188,7 +188,7 @@ export default function DashboardLayout({ children, title, subtitle, actions }) 
                   <item.icon className={`w-4 h-4 shrink-0 transition-colors ${isActive ? 'text-white' : 'text-[#71717A]'}`} />
                   <span className="flex-1">{item.label}</span>
                   {isApps && <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${isActive ? 'rotate-0' : '-rotate-90'}`} />}
-                </Link>
+                </Link>  
                 
                 <AnimatePresence>
                   {/* Apps sub-nav */}

@@ -1,20 +1,12 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Clock, Globe, MapPin, ChevronRight, Check } from 'lucide-react';
-
-// ── Booking Widget Calendar ──────────────────────────────────────────────────
-const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-const DATES = [
-  [null, null, null, null, 1, 2],
-  [3, 4, 5, 6, 7, 8, 9],
-  [10, 11, 12, 13, 14, 15, 16],
-  [17, 18, 19, 20, 21, 22, 23],
-  [24, 25, 26, 27, 28, 29, 30],
-];
+import Calendar from 'react-calendar';
+import 'react-calendar/dist/Calendar.css';
 
 function BookingWidget() {
   const [selectedDuration, setSelectedDuration] = useState('30m');
-  const [selectedDate, setSelectedDate] = useState(27);
+  const [selectedDate, setSelectedDate] = useState(new Date());
 
   return (
     <motion.div 
@@ -55,51 +47,16 @@ function BookingWidget() {
         </div>
       </div>
 
-      {/* Right panel - Dynamic Grid */}
-      <div className="flex-1 p-8">
-        <div className="flex items-center justify-between mb-8">
-          <h4 className="font-bold text-lg">May 2025</h4>
-          <div className="flex gap-2">
-            {[1, 2].map(i => (
-              <button key={i} className="w-8 h-8 rounded-lg border border-gray-100 flex items-center justify-center hover:bg-gray-50 transition-colors">
-                {i === 1 ? <ChevronRight className="w-4 h-4 rotate-180" /> : <ChevronRight className="w-4 h-4" />}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Day headers */}
-        <div className="grid grid-cols-7 gap-1 mb-4">
-          {DAYS.map(d => (
-            <div key={d} className="text-center text-[10px] font-bold text-gray-300 uppercase tracking-widest">{d}</div>
-          ))}
-        </div>
-
-        {/* Date grid */}
-        <div className="space-y-1">
-          {DATES.map((week, wi) => (
-            <div key={wi} className="grid grid-cols-7 gap-1">
-              {week.map((date, di) => (
-                <button
-                  key={di}
-                  disabled={!date}
-                  onClick={() => date && setSelectedDate(date)}
-                  className={`
-                    aspect-square flex items-center justify-center text-[14px] font-bold rounded-xl transition-all duration-300
-                    ${!date ? 'opacity-0' : ''}
-                    ${date === selectedDate 
-                      ? 'bg-black text-white shadow-xl scale-110' 
-                      : 'text-gray-700 hover:bg-gray-100'
-                    }
-                  `}
-                >
-                  {date}
-                  {date === 1 && <div className="absolute mt-6 w-1 h-1 rounded-full bg-black/20" />}
-                </button>
-              ))}
-            </div>
-          ))}
-        </div>
+      {/* Right panel - Dynamic Calendar */}
+      <div className="flex-1 p-8 hero-calendar-wrapper">
+        <Calendar 
+          onChange={setSelectedDate} 
+          value={selectedDate}
+          className="border-0 w-full"
+          view="month"
+          prev2Label={null}
+          next2Label={null}
+        />
 
         <motion.button 
           whileHover={{ scale: 1.02 }}
@@ -231,6 +188,90 @@ export default function Hero() {
         
         .animate-marquee {
           animation: marquee 40s linear infinite;
+        }
+
+        /* Hero Calendar Customization */
+        .hero-calendar-wrapper .react-calendar {
+          background: transparent;
+          border: none;
+          font-family: inherit;
+          width: 100% !important;
+        }
+        .hero-calendar-wrapper .react-calendar__navigation {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          margin-bottom: 2rem;
+          height: auto;
+        }
+        /* Move the month/year label to the left and buttons to the right */
+        .hero-calendar-wrapper .react-calendar__navigation__label {
+          flex-grow: 0 !important;
+          font-weight: 800 !important;
+          font-size: 1.125rem !important;
+          color: #000 !important;
+          padding: 0 !important;
+          background: none !important;
+          pointer-events: none;
+        }
+        .hero-calendar-wrapper .react-calendar__navigation__arrow {
+          flex-grow: 0;
+          min-width: 32px !important;
+          height: 32px !important;
+          border: none !important;
+          border-radius: 8px !important;
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          margin-left: 4px;
+          background: transparent !important;
+        }
+        .hero-calendar-wrapper .react-calendar__navigation__arrow:hover {
+          background: #f3f4f6 !important;
+        }
+        .hero-calendar-wrapper .react-calendar__month-view__weekdays {
+          text-align: center;
+          text-transform: uppercase;
+          font-weight: 800;
+          font-size: 10px;
+          letter-spacing: 0.1em;
+          color: #d1d5db;
+          margin-bottom: 1rem;
+        }
+        .hero-calendar-wrapper .react-calendar__month-view__weekdays__weekday abbr {
+          text-decoration: none;
+        }
+        .hero-calendar-wrapper .react-calendar__tile {
+          aspect-ratio: 1/1;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-weight: 700;
+          font-size: 14px;
+          border-radius: 12px;
+          transition: all 0.2s;
+          color: #374151;
+          background: none !important;
+          padding: 0 !important;
+        }
+        .hero-calendar-wrapper .react-calendar__tile--now {
+          color: #000;
+          font-weight: 900;
+        }
+        .hero-calendar-wrapper .react-calendar__tile--active {
+          background: #000 !important;
+          color: #fff !important;
+          box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1);
+          transform: scale(1.05);
+        }
+        .hero-calendar-wrapper .react-calendar__tile:hover:not(.react-calendar__tile--active) {
+          background: #f9fafb !important;
+        }
+        .hero-calendar-wrapper .react-calendar__tile--neighboringMonth {
+          display: none; /* Keep it clean like the static version */
+        }
+        .hero-calendar-wrapper .react-calendar__month-view__days {
+          gap: 4px;
         }
       `}</style>
     </div>
