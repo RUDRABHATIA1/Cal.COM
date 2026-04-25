@@ -24,6 +24,7 @@ import {
 } from 'lucide-react';
 import api from '../utils/api';
 
+// side se jo appear ho rahi hai chize that kind of transition 
 const sidebarVariants = {
   hidden: { opacity: 0, x: -20 },
   visible: (i) => ({
@@ -50,21 +51,6 @@ const submenuVariants = {
     transition: { duration: 0.2, ease: 'easeInOut' }
   }
 };
-
-const SidebarItem = ({ icon: Icon, label, path, active, badge }) => (
-  <Link
-    to={path}
-    className={`flex items-center gap-3 px-3 py-2 rounded-md text-[13.5px] font-medium transition-colors ${
-      active
-        ? 'bg-[#2B2B2B] text-white'
-        : 'text-[#A1A1AA] hover:bg-[#1E1E1E] hover:text-white'
-    }`}
-  >
-    <Icon className="w-4 h-4 shrink-0" />
-    <span className="flex-1">{label}</span>
-    {badge && <span className="text-[11px] bg-[#3F3F46] text-[#A1A1AA] px-1.5 py-0.5 rounded">{badge}</span>}
-  </Link>
-);
 
 const StatRow = ({ label, value, primary, success }) => (
   <div className="flex items-center justify-between py-2 border-b border-[#2B2B2B] last:border-0">
